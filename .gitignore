@@ -1,0 +1,41 @@
+# Dependencies
+node_modules
+__pycache__
+*.pyc
+.Python
+env/
+venv/
+.venv/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build output
+dist
+build
+*.log
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ML models (downloaded at runtime)
+ml-service/app/ml_models/*.pt
+ml-service/app/ml_models/*.pkl
+ml-service/app/ml_models/*.onnx
+
+# Test coverage
+coverage
+
+# Misc
+*.pid
+*.seed
+*.pid.lock
