@@ -1,6 +1,10 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Search, Filter } from 'lucide-react';
 import { getSpecies } from '../features/sightings/speciesApi';
+import { ConservationBadge } from '../components/ui';
+import { PageHeader, EmptyState } from '../components/ui';
 
 function Species() {
   const [speciesList, setSpeciesList] = useState([]);
@@ -30,40 +34,117 @@ function Species() {
   const totalPages = Math.ceil(total / limit);
 
   return (
-    <div className="max-w-6xl mx-auto mt-10 p-6">
-      <h1 className="text-3xl font-bold mb-6">Species Catalog</h1>
-      <div className="mb-4">
-        <input
-          type="text"
-          placeholder="Search species..."
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          className="border rounded p-2 w-full max-w-md"
-        />
+    <div className="min-h-screen">
+      <div className="bg-gradient-to-b from-canopy-forest-950 to-canopy-forest-800 pt-16 lg:pt-24 pb-20">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
+          <PageHeader
+            title="Species Catalog"
+            subtitle="Explore and learn about the species tracked by the Canopy conservation community."
+            actions={
+              <div className="flex gap-3">
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-canopy-forest-600/50" />
+                  <input
+                    type="text"
+                    placeholder="Search species..."
+                    value={search}
+                    onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                    className="input-field pl-12 w-full sm:w-80"
+                  />
+                </div>
+                <button className="btn-secondary hidden sm:flex">
+                  <Filter className="w-4 h-4 mr-2" />
+                  Filter
+                </button>
+              </div>
+            }
+          />
+        </div>
       </div>
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {speciesList.map((s) => (
-              <div key={s._id} className="border rounded p-4 bg-white shadow-sm">
-                <h2 className="text-xl font-semibold">{s.name}</h2>
-                {s.scientificName && <p className="text-sm text-slate-600 italic">{s.scientificName}</p>}
-                <p className="text-sm mt-2 text-slate-700">{s.description || 'No description available.'}</p>
-                <p className="text-xs mt-2 text-slate-500">Status: {s.conservationStatus}</p>
+
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 -mt-10">
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="card animate-pulse">
+                <div className="aspect-[4/5] bg-canopy-mist-200/50 rounded-t-3xl" />
+                <div className="p-6 space-y-3">
+                  <div className="h-6 bg-canopy-mist-200/50 rounded w-3/4" />
+                  <div className="h-4 bg-canopy-mist-200/50 rounded w-1/2" />
+                  <div className="h-4 bg-canopy-mist-200/50 rounded w-full" />
+                </div>
               </div>
             ))}
           </div>
-          {totalPages > 1 && (
-            <div className="mt-6 flex justify-between">
-              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="px-4 py-2 border rounded disabled:opacity-50">Previous</button>
-              <span>Page {page} of {totalPages}</span>
-              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-4 py-2 border rounded disabled:opacity-50">Next</button>
+        ) : speciesList.length === 0 ? (
+          <EmptyState
+            title="No species found"
+            description="Try adjusting your search or check back later for new entries."
+          />
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {speciesList.map((s, index) => (
+                <motion.div
+                  key={s._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="card overflow-hidden group cursor-pointer hover:shadow-ambient-lg transition-all duration-300"
+                >
+                  <div className="aspect-[4/5] bg-canopy-sand-100 relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-t from-canopy-forest-950/70 via-transparent to-transparent z-10" />
+                    <div className="absolute top-4 right-4 z-20">
+                      <ConservationBadge status={s.conservationStatus} />
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
+                      <h3 className="font-display text-xl font-semibold text-white mb-1">{s.name}</h3>
+                      {s.scientificName && (
+                        <p className="text-sm text-white/80 italic">{s.scientificName}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="p-5">
+                    <p className="text-sm text-canopy-ink-900/70 line-clamp-2 leading-relaxed">
+                      {s.description || 'No description available.'}
+                    </p>
+                    {s.region?.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {s.region.slice(0, 3).map((r) => (
+                          <span key={r} className="text-xs px-3 py-1 rounded-full bg-canopy-sand-100 text-canopy-forest-600 font-medium">
+                            {r}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
             </div>
-          )}
-        </>
-      )}
+            {totalPages > 1 && (
+              <div className="mt-12 flex justify-between items-center">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="btn-secondary disabled:opacity-40"
+                >
+                  Previous
+                </button>
+                <span className="text-sm text-canopy-ink-900/70 font-medium">
+                  Page {page} of {totalPages}
+                </span>
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="btn-secondary disabled:opacity-40"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

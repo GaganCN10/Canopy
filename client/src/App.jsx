@@ -1,14 +1,15 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
+import Home from './pages/Home';
 import Login from './features/auth/Login';
 import Register from './features/auth/Register';
 import Profile from './pages/Profile';
 import AdminUsers from './pages/AdminUsers';
-import Species from './pages/Species';
 import AdminSpecies from './pages/AdminSpecies';
-import ReportSighting from './pages/ReportSighting';
+import Species from './pages/Species';
 import Sightings from './pages/Sightings';
+import ReportSighting from './pages/ReportSighting';
 import MapPage from './pages/MapPage';
 import SubmitTip from './pages/SubmitTip';
 import AdminTips from './pages/AdminTips';
@@ -16,15 +17,16 @@ import ReportHWC from './pages/ReportHWC';
 import AdminGeofences from './pages/AdminGeofences';
 import CreateRescueCase from './pages/CreateRescueCase';
 import RescueCases from './pages/RescueCases';
+import RescueCaseDetail from './pages/RescueCaseDetail';
 import AnalyticsDashboard from './pages/AnalyticsDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-canopy-sand-50 text-canopy-ink-900">
       <Routes>
         <Route path="/" element={<MainLayout />}>
-          <Route index element={<h1>Welcome to Canopy</h1>} />
+          <Route index element={<Home />} />
           <Route path="login" element={<Login />} />
           <Route path="register" element={<Register />} />
           <Route path="unauthorized" element={<h1>Unauthorized</h1>} />
@@ -36,6 +38,7 @@ function App() {
           <Route path="hwc/report" element={<ReportHWC />} />
           <Route path="rescue" element={<RescueCases />} />
           <Route path="rescue/new" element={<CreateRescueCase />} />
+          <Route path="rescue/:id" element={<RescueCaseDetail />} />
           <Route path="analytics" element={<AnalyticsDashboard />} />
           <Route
             path="profile"

@@ -1,8 +1,22 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
-import { getRescueCases, updateRescueCaseStatus, addTreatmentLog } from '../features/sightings/rescueApi';
+import { motion } from 'framer-motion';
+import { Plus, Heart, Activity, CheckCircle, XCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { getRescueCases, updateRescueCaseStatus } from '../features/sightings/rescueApi';
+import { StatusBadge } from '../components/ui';
+import { PageHeader, EmptyState } from '../components/ui';
+import Button from '../components/Button';
 
 const STATUS_OPTIONS = ['intake', 'in_care', 'released', 'deceased'];
+const COLUMNS = [
+  { id: 'all', label: 'All Cases', icon: Activity },
+  ...STATUS_OPTIONS.map((status) => ({
+    id: status,
+    label: status.replace('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
+    icon: status === 'intake' ? Plus : status === 'in_care' ? Activity : status === 'released' ? CheckCircle : XCircle,
+  })),
+];
 
 function RescueCases() {
   const [cases, setCases] = useState([]);
@@ -10,10 +24,8 @@ function RescueCases() {
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const [selectedCase, setSelectedCase] = useState(null);
-  const [treatmentNotes, setTreatmentNotes] = useState('');
-  const [treatment, setTreatment] = useState('');
   const limit = 20;
+  const navigate = useNavigate();
 
   const loadCases = async () => {
     setLoading(true);
@@ -43,95 +55,132 @@ function RescueCases() {
     }
   };
 
-  const handleAddTreatment = async (e) => {
-    e.preventDefault();
-    if (!selectedCase || !treatmentNotes) return;
-    try {
-      await addTreatmentLog(selectedCase._id, { notes: treatmentNotes, treatment });
-      setTreatmentNotes('');
-      setTreatment('');
-      setSelectedCase(null);
-      loadCases();
-    } catch (err) {
-      alert('Failed to add treatment log');
-    }
-  };
-
   return (
-    <div className="max-w-6xl mx-auto mt-10 p-6">
-      <h1 className="text-3xl font-bold mb-6">Rescue & Rehabilitation Cases</h1>
-      <div className="mb-4">
-        <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} className="border rounded p-2">
-          <option value="">All Statuses</option>
-          {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
-        </select>
+    <div className="min-h-screen">
+      <div className="bg-gradient-to-b from-canopy-forest-950 to-canopy-forest-800 pt-16 lg:pt-24 pb-20">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
+          <PageHeader
+            title="Rescue & Rehabilitation"
+            subtitle="Track and manage wildlife rescue cases from intake to release."
+            actions={
+              <Button onClick={() => navigate('/rescue/new')} variant="clay">
+                <Plus className="w-5 h-5 mr-2" />
+                New Case
+              </Button>
+            }
+          />
+
+          <div className="flex flex-wrap gap-3">
+            {COLUMNS.map((col) => (
+              <button
+                key={col.id}
+                onClick={() => { setStatusFilter(col.id === 'all' ? '' : col.id); setPage(1); }}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  (col.id === 'all' && !statusFilter) || statusFilter === col.id
+                    ? 'bg-white text-canopy-forest-800'
+                    : 'bg-white/10 text-white/80 hover:bg-white/20'
+                }`}
+              >
+                {col.label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <>
-          <div className="space-y-4">
-            {cases.map((c) => (
-              <div key={c._id} className="border rounded p-4 bg-white shadow-sm">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h2 className="text-xl font-semibold">{c.caseNumber}</h2>
-                    <p className="text-sm text-slate-700">Species: {c.species?.name || 'Unknown'}</p>
-                    <p className="text-sm text-slate-700">Center: {c.center}</p>
-                    <p className="text-xs text-slate-500">Status: {c.status.replace('_', ' ')}</p>
-                    {c.treatmentLogs?.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-xs font-semibold">Treatment Logs:</p>
-                        {c.treatmentLogs.map((log, idx) => (
-                          <p key={idx} className="text-xs text-slate-600">- {log.notes} ({new Date(log.date).toLocaleDateString()})</p>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    {STATUS_OPTIONS.filter((s) => s !== c.status).map((s) => (
-                      <button key={s} onClick={() => handleStatusUpdate(c._id, s)} className="text-xs px-2 py-1 bg-slate-200 rounded hover:bg-slate-300">
-                        Set {s.replace('_', ' ')}
-                      </button>
-                    ))}
-                    <button onClick={() => setSelectedCase(c)} className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200">
-                      Add Treatment
-                    </button>
-                  </div>
-                </div>
+
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 -mt-10">
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="card p-6 animate-pulse">
+                <div className="h-6 bg-canopy-mist-200/50 rounded w-1/2 mb-4" />
+                <div className="h-4 bg-canopy-mist-200/50 rounded w-3/4 mb-2" />
+                <div className="h-4 bg-canopy-mist-200/50 rounded w-full" />
               </div>
             ))}
           </div>
-          {totalPages > 1 && (
-            <div className="mt-6 flex justify-between">
-              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="px-4 py-2 border rounded disabled:opacity-50">Previous</button>
-              <span>Page {page} of {totalPages}</span>
-              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-4 py-2 border rounded disabled:opacity-50">Next</button>
-            </div>
-          )}
-          {selectedCase && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-              <div className="bg-white p-6 rounded-lg max-w-md w-full">
-                <h3 className="text-xl font-bold mb-4">Add Treatment Log</h3>
-                <form onSubmit={handleAddTreatment} className="space-y-4">
+        ) : cases.length === 0 ? (
+          <EmptyState
+            title="No rescue cases found"
+            description="Create a new case to start tracking wildlife rescue operations."
+            action={
+              <Button onClick={() => navigate('/rescue/new')} variant="primary">
+                <Plus className="w-5 h-5 mr-2" />
+                Create Case
+              </Button>
+            }
+          />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {cases.map((c, index) => (
+              <motion.div
+                key={c._id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="card p-6 hover:shadow-ambient-lg transition-all duration-300"
+              >
+                <div className="flex items-start justify-between mb-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Notes</label>
-                    <textarea value={treatmentNotes} onChange={(e) => setTreatmentNotes(e.target.value)} className="w-full border rounded p-2" rows="3" required />
+                    <h3 className="font-display text-xl font-semibold text-canopy-forest-950">{c.caseNumber}</h3>
+                    <p className="text-sm text-canopy-ink-900/70 mt-1">Species: {c.species?.name || 'Unknown'}</p>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Treatment</label>
-                    <input type="text" value={treatment} onChange={(e) => setTreatment(e.target.value)} className="w-full border rounded p-2" />
+                  <StatusBadge status={c.status} />
+                </div>
+
+                <div className="space-y-3 mb-6">
+                  <div className="flex items-center gap-2 text-sm text-canopy-ink-900/70">
+                    <Activity className="w-4 h-4 text-canopy-forest-400" />
+                    <span>Center: {c.center}</span>
                   </div>
-                  <div className="flex gap-2">
-                    <button type="submit" className="bg-canopy-600 text-white px-4 py-2 rounded">Save</button>
-                    <button type="button" onClick={() => setSelectedCase(null)} className="border px-4 py-2 rounded">Cancel</button>
+                  <div className="flex items-center gap-2 text-sm text-canopy-ink-900/70">
+                    <Heart className="w-4 h-4 text-canopy-forest-400" />
+                    <span>Rescuer: {c.rescuer?.firstName || 'Unknown'}</span>
                   </div>
-                </form>
-              </div>
-            </div>
-          )}
-        </>
-      )}
+                </div>
+
+                {c.treatmentLogs?.length > 0 && (
+                  <div className="mb-4 p-3 rounded-xl bg-canopy-sand-100">
+                    <p className="text-xs font-semibold text-canopy-ink-900/70 mb-1">Latest Treatment</p>
+                    <p className="text-sm text-canopy-ink-900/80">{c.treatmentLogs[c.treatmentLogs.length - 1].notes}</p>
+                  </div>
+                )}
+
+                <div className="flex flex-wrap gap-2">
+                  {STATUS_OPTIONS.filter((s) => s !== c.status).map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => handleStatusUpdate(c._id, s)}
+                      className="text-xs px-3 py-1.5 rounded-full bg-canopy-sand-100 text-canopy-forest-600 hover:bg-canopy-forest-600 hover:text-white transition-colors"
+                    >
+                      Set {s.replace('_', ' ')}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+        {totalPages > 1 && (
+          <div className="mt-12 flex justify-between items-center">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="btn-secondary disabled:opacity-40"
+            >
+              Previous
+            </button>
+            <span className="text-sm text-canopy-ink-900/70 font-medium">Page {page} of {totalPages}</span>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="btn-secondary disabled:opacity-40"
+            >
+              Next
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

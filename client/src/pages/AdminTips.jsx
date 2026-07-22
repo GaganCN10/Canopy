@@ -1,6 +1,10 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { CheckCircle, Clock, AlertTriangle, XCircle } from 'lucide-react';
 import { getTips, updateTipStatus } from '../features/sightings/tipApi';
+import { StatusBadge } from '../components/ui';
+import { PageHeader, EmptyState } from '../components/ui';
 
 const STATUS_OPTIONS = ['new', 'under_review', 'actioned', 'closed'];
 
@@ -43,55 +47,109 @@ function AdminTips() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto mt-10 p-6">
-      <h1 className="text-2xl font-bold mb-6">Anti-Poaching Tips Review Queue</h1>
-      {error && <p className="text-red-600 mb-4">{error}</p>}
-      <div className="mb-4">
-        <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }} className="border rounded p-2">
-          <option value="">All Statuses</option>
-          {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
-        </select>
+    <div className="min-h-screen">
+      <div className="bg-gradient-to-b from-canopy-forest-950 to-canopy-forest-800 pt-16 lg:pt-24 pb-20">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
+          <PageHeader
+            title="Anti-Poaching Tips Review Queue"
+            subtitle="Review and update the status of submitted anti-poaching intelligence."
+            actions={
+              <select
+                value={statusFilter}
+                onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+                className="input-field w-auto"
+              >
+                <option value="">All Statuses</option>
+                {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
+              </select>
+            }
+          />
+        </div>
       </div>
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <>
-          <div className="space-y-4">
-            {tips.map((t) => (
-              <div key={t._id} className="border rounded p-4 bg-white shadow-sm">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h2 className="text-xl font-semibold">{t.title}</h2>
-                    <p className="text-sm text-slate-700 mt-2">{t.description}</p>
-                    <p className="text-xs text-slate-500 mt-2">
-                      Status: <span className="font-semibold">{t.status.replace('_', ' ')}</span>
-                      {' '}· Submitted: {new Date(t.createdAt).toLocaleString()}
-                    </p>
-                    {t.location?.coordinates?.length === 2 && (
-                      <p className="text-xs text-slate-500">Location: {t.location.coordinates[1].toFixed(4)}, {t.location.coordinates[0].toFixed(4)}</p>
-                    )}
-                    {t.reviewNotes && <p className="text-xs text-slate-500 mt-1">Review: {t.reviewNotes}</p>}
+
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 -mt-10">
+        <div className="card overflow-hidden">
+          {loading ? (
+            <div className="p-8 space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-32 bg-canopy-mist-200/30 rounded-2xl animate-pulse" />
+              ))}
+            </div>
+          ) : tips.length === 0 ? (
+            <EmptyState title="No tips found" description="The review queue is currently empty." />
+          ) : (
+            <div className="divide-y divide-canopy-mist-200">
+              {tips.map((t) => (
+                <motion.div
+                  key={t._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-6 lg:p-8 hover:bg-canopy-sand-100/50 transition-colors"
+                >
+                  <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+                    <div className="flex-grow">
+                      <div className="flex items-start gap-3 mb-3">
+                        <AlertTriangle className="w-5 h-5 text-canopy-clay-500 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <h3 className="font-display text-xl font-semibold text-canopy-forest-950">{t.title}</h3>
+                          <p className="text-sm text-canopy-ink-900/60 mt-1">{t.description}</p>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-4 text-xs text-canopy-ink-900/50 font-mono ml-8">
+                        <span>Submitted: {new Date(t.createdAt).toLocaleString()}</span>
+                        {t.location?.coordinates?.length === 2 && (
+                          <>
+                            <span>·</span>
+                            <span>{t.location.coordinates[1].toFixed(4)}, {t.location.coordinates[0].toFixed(4)}</span>
+                          </>
+                        )}
+                      </div>
+                      {t.reviewNotes && (
+                        <div className="mt-3 ml-8 p-3 rounded-xl bg-canopy-sand-100 text-sm text-canopy-ink-900/80">
+                          <span className="font-semibold">Review note:</span> {t.reviewNotes}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-2 lg:ml-4">
+                      {STATUS_OPTIONS.filter((s) => s !== t.status).map((s) => (
+                        <button
+                          key={s}
+                          onClick={() => handleStatusUpdate(t._id, s)}
+                          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-canopy-sand-100 text-canopy-forest-600 hover:bg-canopy-forest-600 hover:text-white transition-colors"
+                        >
+                          {s === 'actioned' && <CheckCircle className="w-4 h-4" />}
+                          {s === 'under_review' && <Clock className="w-4 h-4" />}
+                          {s === 'closed' && <XCircle className="w-4 h-4" />}
+                          Mark {s.replace('_', ' ')}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                  <div className="flex flex-col gap-2">
-                    {STATUS_OPTIONS.filter((s) => s !== t.status).map((s) => (
-                      <button key={s} onClick={() => handleStatusUpdate(t._id, s)} className="text-xs px-2 py-1 bg-slate-200 rounded hover:bg-slate-300">
-                        Mark {s.replace('_', ' ')}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          {totalPages > 1 && (
-            <div className="mt-6 flex justify-between">
-              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="px-4 py-2 border rounded disabled:opacity-50">Previous</button>
-              <span>Page {page} of {totalPages}</span>
-              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-4 py-2 border rounded disabled:opacity-50">Next</button>
+                </motion.div>
+              ))}
             </div>
           )}
-        </>
-      )}
+          {totalPages > 1 && (
+            <div className="p-6 border-t border-canopy-mist-200 flex justify-between items-center">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="btn-secondary disabled:opacity-40"
+              >
+                Previous
+              </button>
+              <span className="text-sm text-canopy-ink-900/70 font-medium">Page {page} of {totalPages}</span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="btn-secondary disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

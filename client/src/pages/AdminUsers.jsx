@@ -1,6 +1,10 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Users as UsersIcon, Search, Shield, Ban, CheckCircle } from 'lucide-react';
 import { listUsers, changeUserRole, banUser } from '../features/admin/userApi';
+import { StatusBadge } from '../components/ui';
+import { PageHeader, EmptyState } from '../components/ui';
 
 const ROLES = ['public', 'citizen', 'ranger', 'researcher', 'rescue', 'admin'];
 
@@ -31,6 +35,8 @@ function AdminUsers() {
     loadUsers();
   }, [page, search]);
 
+  const totalPages = Math.ceil(total / limit);
+
   const handleRoleChange = async (userId, newRole) => {
     try {
       await changeUserRole(userId, newRole);
@@ -49,79 +55,120 @@ function AdminUsers() {
     }
   };
 
-  const totalPages = Math.ceil(total / limit);
-
   return (
-    <div className="max-w-6xl mx-auto mt-10 p-6 bg-white rounded-lg shadow">
-      <h1 className="text-2xl font-bold mb-6">User Management</h1>
-      {error && <p className="text-red-600 mb-4">{error}</p>}
-      <div className="mb-4">
-        <input
-          type="text"
-          placeholder="Search by email..."
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          className="border rounded p-2 w-full"
-        />
+    <div className="min-h-screen">
+      <div className="bg-gradient-to-b from-canopy-forest-950 to-canopy-forest-800 pt-16 lg:pt-24 pb-20">
+        <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
+          <PageHeader
+            title="User Management"
+            subtitle="Manage user roles, permissions, and account status across the platform."
+            actions={
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-canopy-forest-600/50" />
+                <input
+                  type="text"
+                  placeholder="Search by email..."
+                  value={search}
+                  onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                  className="input-field pl-12 w-full sm:w-80"
+                />
+              </div>
+            }
+          />
+        </div>
       </div>
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-slate-100">
-                  <th className="border p-2 text-left">Name</th>
-                  <th className="border p-2 text-left">Email</th>
-                  <th className="border p-2 text-left">Role</th>
-                  <th className="border p-2 text-left">Status</th>
-                  <th className="border p-2 text-left">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((u) => (
-                  <tr key={u._id}>
-                    <td className="border p-2">{u.firstName} {u.lastName}</td>
-                    <td className="border p-2">{u.email}</td>
-                    <td className="border p-2">
-                      <select
-                        value={u.role}
-                        onChange={(e) => handleRoleChange(u._id, e.target.value)}
-                        className="border rounded p-1"
-                      >
-                        {ROLES.map((role) => (
-                          <option key={role} value={role}>{role}</option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="border p-2">
-                      <span className={u.isBanned ? 'text-red-600' : 'text-green-600'}>
-                        {u.isBanned ? 'Banned' : 'Active'}
-                      </span>
-                    </td>
-                    <td className="border p-2">
-                      <button
-                        onClick={() => handleBanToggle(u._id)}
-                        className={`px-3 py-1 rounded text-white ${u.isBanned ? 'bg-green-600' : 'bg-red-600'}`}
-                      >
-                        {u.isBanned ? 'Unban' : 'Ban'}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {totalPages > 1 && (
-            <div className="mt-4 flex justify-between">
-              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="px-4 py-2 border rounded disabled:opacity-50">Previous</button>
-              <span>Page {page} of {totalPages}</span>
-              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-4 py-2 border rounded disabled:opacity-50">Next</button>
+
+      <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 -mt-10">
+        <div className="card overflow-hidden">
+          {loading ? (
+            <div className="p-8 space-y-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="h-20 bg-canopy-mist-200/30 rounded-2xl animate-pulse" />
+              ))}
             </div>
+          ) : users.length === 0 ? (
+            <EmptyState title="No users found" description="Try adjusting your search criteria." />
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-canopy-mist-200">
+                      <th className="text-left px-6 py-4 text-sm font-semibold text-canopy-ink-900/70">User</th>
+                      <th className="text-left px-6 py-4 text-sm font-semibold text-canopy-ink-900/70">Role</th>
+                      <th className="text-left px-6 py-4 text-sm font-semibold text-canopy-ink-900/70">Status</th>
+                      <th className="text-right px-6 py-4 text-sm font-semibold text-canopy-ink-900/70">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-canopy-mist-200">
+                    {users.map((u) => (
+                      <motion.tr
+                        key={u._id}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="hover:bg-canopy-sand-100/50 transition-colors"
+                      >
+                        <td className="px-6 py-4">
+                          <div>
+                            <p className="font-medium text-canopy-forest-950">{u.firstName} {u.lastName}</p>
+                            <p className="text-sm text-canopy-ink-900/60">{u.email}</p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <select
+                            value={u.role}
+                            onChange={(e) => handleRoleChange(u._id, e.target.value)}
+                            className="input-field text-sm py-2 w-auto"
+                          >
+                            {ROLES.map((role) => (
+                              <option key={role} value={role}>{role}</option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="px-6 py-4">
+                          <StatusBadge status={u.isBanned ? 'closed' : 'verified'} />
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <button
+                            onClick={() => handleBanToggle(u._id)}
+                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                              u.isBanned
+                                ? 'bg-canopy-moss-300/20 text-canopy-forest-600 hover:bg-canopy-moss-300/30'
+                                : 'bg-red-50 text-red-600 hover:bg-red-100'
+                            }`}
+                          >
+                            {u.isBanned ? <CheckCircle className="w-4 h-4" /> : <Ban className="w-4 h-4" />}
+                            {u.isBanned ? 'Unban' : 'Ban'}
+                          </button>
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {totalPages > 1 && (
+                <div className="p-6 border-t border-canopy-mist-200 flex justify-between items-center">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="btn-secondary disabled:opacity-40"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-sm text-canopy-ink-900/70 font-medium">Page {page} of {totalPages}</span>
+                  <button
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page === totalPages}
+                    className="btn-secondary disabled:opacity-40"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </>
           )}
-        </>
-      )}
+        </div>
+      </div>
     </div>
   );
 }

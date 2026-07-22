@@ -1,15 +1,29 @@
 import React from 'react';
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Camera, MapPin, FileText, ArrowRight } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { createSighting, uploadSightingImage } from '../features/sightings/sightingApi';
 import { getSpecies } from '../features/sightings/speciesApi';
+import Button from '../components/Button';
+import { PageHeader } from '../components/ui';
+
+const STEPS = [
+  { id: 1, label: 'Species', icon: FileText },
+  { id: 2, label: 'Location', icon: MapPin },
+  { id: 3, label: 'Photo', icon: Camera },
+];
 
 function ReportSighting() {
-  const [speciesId, setSpeciesId] = useState('');
-  const [lat, setLat] = useState('');
-  const [lng, setLng] = useState('');
-  const [notes, setNotes] = useState('');
+  const [step, setStep] = useState(1);
+  const [formData, setFormData] = useState({
+    species: '',
+    lat: '',
+    lng: '',
+    notes: '',
+    images: [],
+  });
   const [imageFile, setImageFile] = useState(null);
   const [speciesList, setSpeciesList] = useState([]);
   const [error, setError] = useState('');
@@ -36,6 +50,10 @@ function ReportSighting() {
     }
   };
 
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -51,10 +69,10 @@ function ReportSighting() {
       }
 
       await createSighting({
-        species: speciesId,
-        lat,
-        lng,
-        notes,
+        species: formData.species,
+        lat: formData.lat,
+        lng: formData.lng,
+        notes: formData.notes,
         images,
       });
 
@@ -66,44 +84,138 @@ function ReportSighting() {
     }
   };
 
-  if (!isAuthenticated) {
-    return null;
-  }
-
   return (
-    <div className="max-w-2xl mx-auto mt-10 p-6 bg-white rounded-lg shadow">
-      <h1 className="text-2xl font-bold mb-6">Report a Sighting</h1>
-      {error && <p className="text-red-600 mb-4">{error}</p>}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Species</label>
-          <select value={speciesId} onChange={(e) => setSpeciesId(e.target.value)} className="w-full border rounded p-2" required>
-            <option value="">Select a species</option>
-            {speciesList.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
-          </select>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Latitude</label>
-            <input type="number" step="any" value={lat} onChange={(e) => setLat(e.target.value)} className="w-full border rounded p-2" required />
+    <div className="min-h-screen">
+      <div className="bg-gradient-to-b from-canopy-forest-950 to-canopy-forest-800 pt-16 lg:pt-24 pb-20">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+          <PageHeader
+            title="Report a Sighting"
+            subtitle="Log a wildlife observation with location data and photos."
+          />
+
+          <div className="flex items-center gap-4">
+            {STEPS.map((s) => (
+              <div key={s.id} className="flex items-center gap-2 flex-1">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  step >= s.id ? 'bg-white text-canopy-forest-800' : 'bg-white/20 text-white/60'
+                }`}>
+                  <s.icon className="w-4 h-4" />
+                </div>
+                {s.id < STEPS.length && (
+                  <div className={`flex-grow h-0.5 ${step > s.id ? 'bg-white' : 'bg-white/20'}`} />
+                )}
+              </div>
+            ))}
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Longitude</label>
-            <input type="number" step="any" value={lng} onChange={(e) => setLng(e.target.value)} className="w-full border rounded p-2" required />
+        </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10">
+        <form onSubmit={handleSubmit} className="card p-8 lg:p-10">
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700"
+            >
+              {error}
+            </motion.div>
+          )}
+
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-canopy-ink-900 mb-2">Species</label>
+              <select
+                name="species"
+                value={formData.species}
+                onChange={handleChange}
+                className="input-field"
+                required
+              >
+                <option value="">Select a species</option>
+                {speciesList.map((s) => <option key={s._id} value={s._id}>{s.name}</option>)}
+              </select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-canopy-ink-900 mb-2">Latitude</label>
+                <div className="relative">
+                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-canopy-forest-600/40" />
+                  <input
+                    type="number"
+                    step="any"
+                    name="lat"
+                    value={formData.lat}
+                    onChange={handleChange}
+                    className="input-field pl-12"
+                    required
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-canopy-ink-900 mb-2">Longitude</label>
+                <div className="relative">
+                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-canopy-forest-600/40" />
+                  <input
+                    type="number"
+                    step="any"
+                    name="lng"
+                    value={formData.lng}
+                    onChange={handleChange}
+                    className="input-field pl-12"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-canopy-ink-900 mb-2">Notes</label>
+              <textarea
+                name="notes"
+                value={formData.notes}
+                onChange={handleChange}
+                className="input-field"
+                rows="4"
+                placeholder="Describe what you observed..."
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-canopy-ink-900 mb-2">Photo (optional)</label>
+              <div className="relative">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setImageFile(e.target.files[0])}
+                  className="hidden"
+                  id="photo-upload"
+                />
+                <label
+                  htmlFor="photo-upload"
+                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-canopy-mist-200 rounded-2xl cursor-pointer hover:border-canopy-forest-400 hover:bg-canopy-sand-50 transition-all"
+                >
+                  <Camera className="w-8 h-8 text-canopy-forest-400 mb-2" />
+                  <span className="text-sm text-canopy-ink-900/70">
+                    {imageFile ? imageFile.name : 'Click to upload a photo'}
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <button type="button" onClick={() => navigate('/sightings')} className="btn-secondary flex-1">
+                Cancel
+              </button>
+              <button type="submit" disabled={loading} className="btn-primary flex-1">
+                {loading ? 'Submitting...' : 'Submit Sighting'}
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </button>
+            </div>
           </div>
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Notes</label>
-          <textarea value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full border rounded p-2" rows="3" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Photo (optional)</label>
-          <input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files[0])} className="w-full border rounded p-2" />
-        </div>
-        <button type="submit" disabled={loading} className="w-full bg-canopy-600 text-white py-2 rounded hover:bg-canopy-700 disabled:opacity-50">
-          {loading ? 'Submitting...' : 'Report Sighting'}
-        </button>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }
