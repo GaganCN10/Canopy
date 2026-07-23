@@ -33,6 +33,7 @@ export const authMiddleware = async (req, res, next) => {
       return res.status(403).json({
         success: false,
         message: 'Your account has been banned',
+        code: 'AUTH_006',
       });
     }
 

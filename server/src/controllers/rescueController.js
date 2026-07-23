@@ -7,6 +7,7 @@ import {
   addTreatmentLog,
 } from '../services/rescueService.js';
 import { sendSuccess, sendError } from '../utils/response.js';
+import { createNotification } from '../services/notificationService.js';
 import logger from '../utils/logger.js';
 
 export const createRescueCaseHandler = async (req, res, next) => {
@@ -27,6 +28,15 @@ export const createRescueCaseHandler = async (req, res, next) => {
       caseNumber: `RC-${Date.now()}`,
       rescueLocation: lat && lng ? { type: 'Point', coordinates: [parseFloat(lng), parseFloat(lat)] } : undefined,
       status: 'intake',
+    });
+
+    await createNotification({
+      recipient: req.user._id.toString(),
+      type: 'rescue_update',
+      title: 'Rescue Case Created',
+      message: `Rescue case ${rescueCase.caseNumber} has been created for ${rescueCase.species?.name || 'unknown species'}.`,
+      data: { rescueCaseId: rescueCase._id, caseNumber: rescueCase.caseNumber },
+      channels: { inApp: true },
     });
 
     sendSuccess(res, 201, 'Rescue case created successfully', rescueCase);
@@ -61,6 +71,16 @@ export const updateRescueCaseStatusHandler = async (req, res, next) => {
   try {
     const { status, releaseNotes } = req.body;
     const rescueCase = await updateRescueCaseStatus(req.params.id, status, releaseNotes);
+
+    await createNotification({
+      recipient: rescueCase.rescuer.toString(),
+      type: 'rescue_update',
+      title: `Rescue Case ${status.replace('_', ' ')}`,
+      message: `Rescue case ${rescueCase.caseNumber} status updated to ${status}.${releaseNotes ? ' Notes: ' + releaseNotes : ''}`,
+      data: { rescueCaseId: rescueCase._id, caseNumber: rescueCase.caseNumber, status },
+      channels: { inApp: true, email: true },
+    });
+
     sendSuccess(res, 200, 'Rescue case status updated successfully', rescueCase);
   } catch (error) {
     logger.error('Update rescue case status error:', error);

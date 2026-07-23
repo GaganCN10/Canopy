@@ -20,7 +20,10 @@ const generateTokens = (userId) => {
 export const register = async ({ email, password, firstName, lastName, role, phone, organization }) => {
   const existingUser = await User.findOne({ email });
   if (existingUser) {
-    throw new Error('User already exists with this email');
+    const error = new Error('User already exists with this email');
+    error.code = 'AUTH_003';
+    error.statusCode = 400;
+    throw error;
   }
 
   const user = await User.create({
@@ -46,16 +49,25 @@ export const register = async ({ email, password, firstName, lastName, role, pho
 export const login = async (email, password) => {
   const user = await User.findOne({ email }).select('+password');
   if (!user) {
-    throw new Error('Invalid credentials');
+    const error = new Error('Invalid credentials');
+    error.code = 'AUTH_001';
+    error.statusCode = 401;
+    throw error;
   }
 
   const isPasswordCorrect = await user.comparePassword(password);
   if (!isPasswordCorrect) {
-    throw new Error('Invalid credentials');
+    const error = new Error('Invalid credentials');
+    error.code = 'AUTH_001';
+    error.statusCode = 401;
+    throw error;
   }
 
   if (user.isBanned) {
-    throw new Error('Your account has been banned');
+    const error = new Error('Your account has been banned');
+    error.code = 'AUTH_006';
+    error.statusCode = 403;
+    throw error;
   }
 
   const tokens = generateTokens(user._id);
@@ -63,7 +75,7 @@ export const login = async (email, password) => {
   return {
     user,
     ...tokens,
-  };
+  }
 };
 
 export const refreshAccessToken = (refreshToken) => {

@@ -7,15 +7,18 @@ import { useNavigate, Link } from 'react-router-dom';
 import { setCredentials } from './authSlice';
 import { login } from './authApi';
 import Button from '../../components/Button';
+import { useToast } from '../../components/Toast';
+import { getErrorMessage } from '../../utils/errors';
 
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [errorInfo, setErrorInfo] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { showError } = useToast();
   const { isAuthenticated } = useSelector((state) => state.auth);
 
   if (isAuthenticated) {
@@ -25,7 +28,7 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
+    setErrorInfo(null);
     setLoading(true);
 
     try {
@@ -33,7 +36,9 @@ function Login() {
       dispatch(setCredentials(result.data));
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      const errorInfo = getErrorMessage(err);
+      setErrorInfo(errorInfo);
+      showError(errorInfo.title, errorInfo.message, errorInfo.remedy);
     } finally {
       setLoading(false);
     }
@@ -78,13 +83,17 @@ function Login() {
             <p className="text-canopy-ink-900/70">Sign in to continue to Canopy</p>
           </div>
 
-          {error && (
+          {errorInfo && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700"
+              className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200"
             >
-              {error}
+              <p className="text-sm font-semibold text-red-800">{errorInfo.title}</p>
+              <p className="text-sm text-red-700 mt-1">{errorInfo.message}</p>
+              <p className="text-xs text-red-600/80 mt-2 bg-red-100/50 rounded-lg px-2 py-1.5">
+                <span className="font-medium">Remedy:</span> {errorInfo.remedy}
+              </p>
             </motion.div>
           )}
 

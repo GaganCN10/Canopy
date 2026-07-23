@@ -1,14 +1,45 @@
-const errorHandler = (err, req, res, next) => {
-  const statusCode = err.statusCode || 500;
-  const message = err.message || 'Internal Server Error';
-  const errors = err.errors || null;
+import { mapStatusToErrorCode } from '../utils/response.js';
+import logger from '../utils/logger.js';
 
-  console.error(`[${new Date().toISOString()}] ${message}`, err.stack);
+const errorHandler = (err, req, res, next) => {
+  let statusCode = err.statusCode || 500;
+  let message = err.message || 'Internal Server Error';
+  let errors = err.errors || null;
+  let code = err.code || mapStatusToErrorCode(statusCode, message);
+
+  if (!err.statusCode && err.name === 'ValidationError') {
+    statusCode = 422;
+    message = 'Validation failed';
+    errors = Object.values(err.errors || {}).map((e) => e.message);
+    code = 'VAL_001';
+  }
+
+  if (!err.statusCode && err.name === 'CastError') {
+    statusCode = 404;
+    message = 'Resource not found';
+    code = 'RES_001';
+  }
+
+  if (!err.statusCode && err.code === 11000) {
+    statusCode = 409;
+    message = 'Duplicate entry';
+    errors = Object.values(err.keyPattern || {}).map((key) => `${key} already exists`);
+    code = 'VAL_001';
+  }
+
+  logger.error(`[${code}] ${message}`, {
+    statusCode,
+    path: req.path,
+    method: req.method,
+    stack: err.stack,
+    errors,
+  });
 
   res.status(statusCode).json({
     success: false,
     message,
     errors,
+    code,
   });
 };
 

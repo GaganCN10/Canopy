@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5002/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -24,6 +24,7 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       const refreshToken = localStorage.getItem('refreshToken');
@@ -40,6 +41,7 @@ api.interceptors.response.use(
         }
       }
     }
+
     return Promise.reject(error);
   },
 );

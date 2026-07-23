@@ -7,6 +7,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { setCredentials } from './authSlice';
 import { register } from './authApi';
 import Button from '../../components/Button';
+import { useToast } from '../../components/Toast';
+import { getErrorMessage } from '../../utils/errors';
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -18,11 +20,12 @@ function Register() {
     phone: '',
     organization: '',
   });
-  const [error, setError] = useState('');
+  const [errorInfo, setErrorInfo] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { showError } = useToast();
   const { isAuthenticated } = useSelector((state) => state.auth);
 
   if (isAuthenticated) {
@@ -36,22 +39,28 @@ function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
+    setErrorInfo(null);
     setLoading(true);
 
     try {
+      if (formData.password !== formData.confirmPassword) {
+        setErrorInfo({
+          title: 'Password Mismatch',
+          message: 'Passwords do not match.',
+          remedy: 'Please re-enter both passwords to confirm they are identical.',
+        });
+        setLoading(false);
+        return;
+      }
+
       const { confirmPassword, ...userData } = formData;
       const result = await register(userData);
       dispatch(setCredentials(result.data));
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
+      const errorInfo = getErrorMessage(err);
+      setErrorInfo(errorInfo);
+      showError(errorInfo.title, errorInfo.message, errorInfo.remedy);
     } finally {
       setLoading(false);
     }
@@ -96,13 +105,17 @@ function Register() {
             <p className="text-canopy-ink-900/70">Join the Canopy conservation network</p>
           </div>
 
-          {error && (
+          {errorInfo && (
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700"
+              className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200"
             >
-              {error}
+              <p className="text-sm font-semibold text-red-800">{errorInfo.title}</p>
+              <p className="text-sm text-red-700 mt-1">{errorInfo.message}</p>
+              <p className="text-xs text-red-600/80 mt-2 bg-red-100/50 rounded-lg px-2 py-1.5">
+                <span className="font-medium">Remedy:</span> {errorInfo.remedy}
+              </p>
             </motion.div>
           )}
 

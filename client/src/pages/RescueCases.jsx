@@ -7,6 +7,8 @@ import { getRescueCases, updateRescueCaseStatus } from '../features/sightings/re
 import { StatusBadge } from '../components/ui';
 import { PageHeader, EmptyState } from '../components/ui';
 import Button from '../components/Button';
+import { useToast } from '../components/Toast';
+import { getErrorMessage } from '../utils/errors';
 
 const STATUS_OPTIONS = ['intake', 'in_care', 'released', 'deceased'];
 const COLUMNS = [
@@ -26,6 +28,7 @@ function RescueCases() {
   const [total, setTotal] = useState(0);
   const limit = 20;
   const navigate = useNavigate();
+  const { showError } = useToast();
 
   const loadCases = async () => {
     setLoading(true);
@@ -34,7 +37,8 @@ function RescueCases() {
       setCases(result.data.cases);
       setTotal(result.data.total);
     } catch (err) {
-      console.error('Failed to load rescue cases', err);
+      const errorInfo = getErrorMessage(err);
+      showError(errorInfo.title, errorInfo.message, errorInfo.remedy);
     } finally {
       setLoading(false);
     }
@@ -51,7 +55,8 @@ function RescueCases() {
       await updateRescueCaseStatus(caseId, { status: newStatus });
       loadCases();
     } catch (err) {
-      alert('Update failed');
+      const errorInfo = getErrorMessage(err);
+      showError(errorInfo.title, errorInfo.message, errorInfo.remedy);
     }
   };
 

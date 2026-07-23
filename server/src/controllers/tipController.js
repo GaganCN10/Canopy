@@ -6,6 +6,7 @@ import {
   updateTipStatus,
 } from '../services/tipService.js';
 import { sendSuccess, sendError } from '../utils/response.js';
+import { createNotification } from '../services/notificationService.js';
 import logger from '../utils/logger.js';
 
 export const createTipHandler = async (req, res, next) => {
@@ -69,6 +70,18 @@ export const updateTipStatusHandler = async (req, res, next) => {
   try {
     const { status, reviewNotes } = req.body;
     const tip = await updateTipStatus(req.params.id, req.user._id, status, reviewNotes);
+
+    if (tip.submittedBy) {
+      await createNotification({
+        recipient: tip.submittedBy.toString(),
+        type: 'tip_status_change',
+        title: `Tip ${status.replace('_', ' ')}`,
+        message: `Your anti-poaching tip has been updated to: ${status}. ${reviewNotes ? 'Notes: ' + reviewNotes : ''}`,
+        data: { tipId: tip._id, status },
+        channels: { inApp: true, email: true },
+      });
+    }
+
     sendSuccess(res, 200, 'Tip status updated successfully', tip);
   } catch (error) {
     logger.error('Update tip status error:', error);

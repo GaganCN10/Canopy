@@ -2,7 +2,7 @@ import React from 'react';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Filter, Layers } from 'lucide-react';
-import { MapContainer, TileLayer, Marker, Popup, CircleMarker, LayersControl, LayerGroup } from 'react-leaflet';
+import { MapContainer, TileLayer, Popup, LayersControl, LayerGroup, CircleMarker } from 'react-leaflet';
 import { getSightings } from '../features/sightings/sightingApi';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -106,8 +106,9 @@ function MapPage() {
                     {showSightings && sightings.map((s) => {
                       const pos = getPosition(s);
                       if (!pos) return null;
+                      const color = statusColor(s.status);
                       return (
-                        <CircleMarker key={s._id} center={pos} radius={8} pathOptions={{ color: statusColor(s.status), fillColor: statusColor(s.status), fillOpacity: 0.6 }}>
+                        <CircleMarker key={s._id} center={pos} radius={8} pathOptions={{ color, fillColor: color, fillOpacity: 0.6 }}>
                           <Popup>
                             <div className="font-sans">
                               <strong>{s.species?.name || 'Unknown'}</strong><br />

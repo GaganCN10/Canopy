@@ -3,6 +3,7 @@ import HWCIncident from '../models/HWCIncident.js';
 import GeofenceZone from '../models/GeofenceZone.js';
 import Tip from '../models/Tip.js';
 import Sighting from '../models/Sighting.js';
+import { createNotification } from './notificationService.js';
 import logger from '../utils/logger.js';
 
 export const createHWCIncident = async (incidentData) => {
@@ -80,5 +81,14 @@ export const recordHWCIncidentForSighting = async (sighting) => {
     status: 'reported',
   });
 
-  return incident;
+  await createNotification({
+    recipient: sighting.reporter.toString(),
+    type: 'geofence_breach',
+    title: 'Geofence Breach Alert',
+    message: `Your sighting was detected inside the "${breach.zone.name}" zone. Rangers have been notified.`,
+    data: { sightingId: sighting._id, zoneId: breach.zone._id, zoneName: breach.zone.name },
+    channels: { inApp: true, email: true },
+  });
+
+  return { incident, zone: breach.zone };
 };

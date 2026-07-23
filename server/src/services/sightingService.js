@@ -5,12 +5,13 @@ import logger from '../utils/logger.js';
 
 export const createSighting = async (sightingData) => {
   const sighting = await Sighting.create(sightingData);
+  let breachIncident = null;
   try {
-    await recordHWCIncidentForSighting(sighting);
+    breachIncident = await recordHWCIncidentForSighting(sighting);
   } catch (err) {
     logger.error('Geofence check failed after sighting creation:', err);
   }
-  return sighting;
+  return { sighting, breachIncident };
 };
 
 export const getSightings = async ({ page = 1, limit = 20, species, status, startDate, endDate, bbox } = {}) => {
