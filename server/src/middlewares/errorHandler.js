@@ -27,13 +27,22 @@ const errorHandler = (err, req, res, next) => {
     code = 'VAL_001';
   }
 
-  logger.error(`[${code}] ${message}`, {
+  const logData = {
     statusCode,
     path: req.path,
     method: req.method,
     stack: err.stack,
     errors,
-  });
+  };
+
+  if (process.env.NODE_ENV === 'production') {
+    delete logData.stack;
+    if (statusCode >= 500) {
+      message = 'Something went wrong. Please try again later.';
+    }
+  }
+
+  logger.error(`[${code}] ${message}`, logData);
 
   res.status(statusCode).json({
     success: false,

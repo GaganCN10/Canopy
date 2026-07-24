@@ -34,4 +34,5 @@ export const config = {
     authToken: process.env.TWILIO_AUTH_TOKEN,
     whatsappNumber: process.env.TWILIO_WHATSAPP_NUMBER,
   },
+  corsOrigin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['http://localhost:5173'],
 };

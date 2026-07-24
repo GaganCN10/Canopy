@@ -70,7 +70,7 @@ export const getRescueCaseHandler = async (req, res, next) => {
 export const updateRescueCaseStatusHandler = async (req, res, next) => {
   try {
     const { status, releaseNotes } = req.body;
-    const rescueCase = await updateRescueCaseStatus(req.params.id, status, releaseNotes);
+    const rescueCase = await updateRescueCaseStatus(req.params.id, status, releaseNotes, req.user._id, req.user.role);
 
     await createNotification({
       recipient: rescueCase.rescuer.toString(),
@@ -90,7 +90,8 @@ export const updateRescueCaseStatusHandler = async (req, res, next) => {
 
 export const addTreatmentLogHandler = async (req, res, next) => {
   try {
-    const rescueCase = await addTreatmentLog(req.params.id, req.body);
+    const rescueCase = await addTreatmentLog(req.params.id, req.body, req.user._id, req.user.role);
+
     sendSuccess(res, 201, 'Treatment log added successfully', rescueCase);
   } catch (error) {
     logger.error('Add treatment log error:', error);

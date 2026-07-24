@@ -22,11 +22,11 @@ router.post('/', authMiddleware, validate([
 router.get('/', validate([
   query('page').optional().isInt({ min: 1 }),
   query('limit').optional().isInt({ min: 1, max: 100 }),
-  query('species').optional().isMongoId(),
-  query('status').optional().isIn(['pending', 'verified', 'rejected']),
-  query('startDate').optional().isISO8601(),
-  query('endDate').optional().isISO8601(),
-  query('bbox').optional().isString(),
+  query('species').optional({ nullable: true }).isMongoId(),
+  query('status').optional({ nullable: true }).isIn(['pending', 'verified', 'rejected']),
+  query('startDate').optional({ nullable: true }).isISO8601(),
+  query('endDate').optional({ nullable: true }).isISO8601(),
+  query('bbox').optional({ nullable: true }).isString(),
 ]), listSightingsHandler);
 
 router.get('/:id', validate([

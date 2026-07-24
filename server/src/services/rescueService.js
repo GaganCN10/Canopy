@@ -33,26 +33,38 @@ export const getRescueCaseById = async (id) => {
   return rescueCase;
 };
 
-export const updateRescueCaseStatus = async (id, status, releaseNotes) => {
-  const update = { status };
-  if (releaseNotes) update.releaseNotes = releaseNotes;
-  const rescueCase = await RescueCase.findByIdAndUpdate(id, update, { new: true, runValidators: true })
-    .populate('species', 'name scientificName')
-    .populate('rescuer', 'firstName lastName email');
+export const updateRescueCaseStatus = async (id, status, releaseNotes, requesterId, requesterRole) => {
+  const rescueCase = await RescueCase.findById(id);
   if (!rescueCase) {
     throw new Error('Rescue case not found');
   }
-  return rescueCase;
+
+  if (requesterRole !== 'admin' && rescueCase.rescuer.toString() !== requesterId.toString()) {
+    throw new Error('You do not have permission to update this rescue case');
+  }
+
+  const update = { status };
+  if (releaseNotes) update.releaseNotes = releaseNotes;
+  const updated = await RescueCase.findByIdAndUpdate(id, update, { new: true, runValidators: true })
+    .populate('species', 'name scientificName')
+    .populate('rescuer', 'firstName lastName email');
+  return updated;
 };
 
-export const addTreatmentLog = async (caseId, logData) => {
-  const rescueCase = await RescueCase.findByIdAndUpdate(
+export const addTreatmentLog = async (caseId, logData, requesterId, requesterRole) => {
+  const rescueCase = await RescueCase.findById(caseId);
+  if (!rescueCase) {
+    throw new Error('Rescue case not found');
+  }
+
+  if (requesterRole !== 'admin' && rescueCase.rescuer.toString() !== requesterId.toString()) {
+    throw new Error('You do not have permission to add treatment logs to this rescue case');
+  }
+
+  const updated = await RescueCase.findByIdAndUpdate(
     caseId,
     { $push: { treatmentLogs: logData } },
     { new: true, runValidators: true },
   ).populate('species', 'name scientificName');
-  if (!rescueCase) {
-    throw new Error('Rescue case not found');
-  }
-  return rescueCase;
+  return updated;
 };

@@ -3,6 +3,16 @@ import { config } from '../config/env.js';
 import User from '../models/User.js';
 import logger from '../utils/logger.js';
 
+const refreshTokenBlacklist = new Set();
+
+export const addToBlacklist = (token) => {
+  refreshTokenBlacklist.add(token);
+};
+
+export const isBlacklisted = (token) => {
+  return refreshTokenBlacklist.has(token);
+};
+
 export const authMiddleware = async (req, res, next) => {
   try {
     let token;

@@ -69,7 +69,7 @@ export const getTipHandler = async (req, res, next) => {
 export const updateTipStatusHandler = async (req, res, next) => {
   try {
     const { status, reviewNotes } = req.body;
-    const tip = await updateTipStatus(req.params.id, req.user._id, status, reviewNotes);
+    const tip = await updateTipStatus(req.params.id, req.user._id, status, reviewNotes, req.user.role);
 
     if (tip.submittedBy) {
       await createNotification({

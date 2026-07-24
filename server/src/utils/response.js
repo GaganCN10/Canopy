@@ -28,6 +28,7 @@ const mapStatusToErrorCode = (status, message = '') => {
   if (status === 422 || status === 400) return 'VAL_001';
   if (status === 413) return 'FILE_001';
   if (status === 429) return 'RATE_001';
+  if (status === 423) return 'AUTH_007';
   if (status >= 500) return 'SYS_002';
   return 'SYS_002';
 };

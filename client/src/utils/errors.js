@@ -29,6 +29,11 @@ const ERROR_MESSAGES = {
     message: 'You do not have permission to access this resource.',
     remedy: 'Contact an administrator if you believe this is an error.',
   },
+  AUTH_007: {
+    title: 'Account Locked',
+    message: 'Your account is temporarily locked due to multiple failed login attempts.',
+    remedy: 'Please wait 30 minutes before trying again, or contact support for immediate assistance.',
+  },
   VAL_001: {
     title: 'Invalid Input',
     message: 'Please correct the highlighted fields.',

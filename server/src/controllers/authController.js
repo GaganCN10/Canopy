@@ -1,5 +1,5 @@
 import { validationResult } from 'express-validator';
-import { register, login, refreshAccessToken } from '../services/authService.js';
+import { register, login, refreshAccessToken, logout } from '../services/authService.js';
 import { sendSuccess, sendError } from '../utils/response.js';
 import logger from '../utils/logger.js';
 
@@ -53,6 +53,23 @@ export const refreshToken = async (req, res, next) => {
   } catch (error) {
     logger.error('Refresh token error:', error);
     sendError(res, 401, error.message);
+  }
+};
+
+export const logoutUser = async (req, res, next) => {
+  try {
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return sendError(res, 400, 'Refresh token is required');
+    }
+
+    await logout(refreshToken);
+
+    sendSuccess(res, 200, 'Logged out successfully');
+  } catch (error) {
+    logger.error('Logout error:', error);
+    next(error);
   }
 };
 

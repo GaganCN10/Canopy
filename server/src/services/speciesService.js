@@ -27,7 +27,15 @@ export const getSpeciesById = async (id) => {
 };
 
 export const updateSpecies = async (id, updateData) => {
-  const species = await Species.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
+  const allowedFields = ['name', 'scientificName', 'conservationStatus', 'description', 'region', 'images'];
+  const update = {};
+  for (const field of allowedFields) {
+    if (updateData[field] !== undefined) {
+      update[field] = updateData[field];
+    }
+  }
+
+  const species = await Species.findByIdAndUpdate(id, update, { new: true, runValidators: true });
   if (!species) {
     throw new Error('Species not found');
   }

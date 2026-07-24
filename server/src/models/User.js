@@ -43,6 +43,13 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    loginAttempts: {
+      type: Number,
+      default: 0,
+    },
+    lockUntil: {
+      type: Date,
+    },
   },
   { timestamps: true },
 );
@@ -63,6 +70,11 @@ userSchema.methods.toJSON = function () {
   return obj;
 };
 
+userSchema.methods.isLocked = function () {
+  return this.lockUntil && this.lockUntil > Date.now();
+};
+
 const User = mongoose.model('User', userSchema);
 
 export default User;
+

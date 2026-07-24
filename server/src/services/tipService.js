@@ -33,7 +33,11 @@ export const getTipById = async (id) => {
   return tip;
 };
 
-export const updateTipStatus = async (tipId, userId, status, reviewNotes) => {
+export const updateTipStatus = async (tipId, userId, status, reviewNotes, requesterRole) => {
+  if (!['ranger', 'admin'].includes(requesterRole)) {
+    throw new Error('Only rangers or admins can update tip status');
+  }
+
   const tip = await Tip.findByIdAndUpdate(
     tipId,
     { status, reviewedBy: userId, reviewNotes },

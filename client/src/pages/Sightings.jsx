@@ -5,8 +5,7 @@ import { Plus, Search, Filter, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { getSightings, voteSighting } from '../features/sightings/sightingApi';
-import { StatusBadge } from '../components/ui';
-import { PageHeader } from '../components/ui';
+import { StatusBadge, PageHeader, EmptyState } from '../components/ui';
 
 function Sightings() {
   const [sightings, setSightings] = useState([]);
@@ -24,7 +23,10 @@ function Sightings() {
   const loadSightings = async () => {
     setLoading(true);
     try {
-      const result = await getSightings({ page, limit, species: speciesFilter, status: statusFilter });
+      const params = { page, limit };
+      if (speciesFilter) params.species = speciesFilter;
+      if (statusFilter) params.status = statusFilter;
+      const result = await getSightings(params);
       setSightings(result.data.sightings);
       setTotal(result.data.total);
     } catch (err) {
