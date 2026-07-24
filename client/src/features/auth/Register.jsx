@@ -1,7 +1,7 @@
 import React from 'react';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Leaf, Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { Leaf, Mail, Lock, User, ArrowRight, CheckCircle2, XCircle } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { setCredentials } from './authSlice';
@@ -25,7 +25,7 @@ function Register() {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { showError } = useToast();
+  const { showSuccess, showError } = useToast();
   const { isAuthenticated } = useSelector((state) => state.auth);
 
   if (isAuthenticated) {
@@ -33,8 +33,34 @@ function Register() {
     return null;
   }
 
+  const hasMinLength = formData.password.length >= 8;
+  const hasUppercase = /[A-Z]/.test(formData.password);
+  const hasLowercase = /[a-z]/.test(formData.password);
+  const hasNumber = /\d/.test(formData.password);
+  const isPasswordValid = hasMinLength && hasUppercase && hasLowercase && hasNumber;
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const validatePassword = () => {
+    if (!hasMinLength) {
+      showError('Weak Password', 'Password must be at least 8 characters long.', 'Add more characters to meet the minimum length.');
+      return false;
+    }
+    if (!hasUppercase) {
+      showError('Weak Password', 'Password must contain at least one uppercase letter.', 'Add an uppercase letter like A, B, C.');
+      return false;
+    }
+    if (!hasLowercase) {
+      showError('Weak Password', 'Password must contain at least one lowercase letter.', 'Add a lowercase letter like a, b, c.');
+      return false;
+    }
+    if (!hasNumber) {
+      showError('Weak Password', 'Password must contain at least one number.', 'Add a number like 1, 2, 3.');
+      return false;
+    }
+    return true;
   };
 
   const handleSubmit = async (e) => {
@@ -49,6 +75,12 @@ function Register() {
           message: 'Passwords do not match.',
           remedy: 'Please re-enter both passwords to confirm they are identical.',
         });
+        showError('Password Mismatch', 'Passwords do not match.', 'Please re-enter both passwords to confirm they are identical.');
+        setLoading(false);
+        return;
+      }
+
+      if (!validatePassword()) {
         setLoading(false);
         return;
       }
@@ -65,6 +97,17 @@ function Register() {
       setLoading(false);
     }
   };
+
+  const PasswordRequirement = ({ met, text }) => (
+    <div className="flex items-center gap-2 text-sm">
+      {met ? (
+        <CheckCircle2 className="w-4 h-4 text-green-600" />
+      ) : (
+        <XCircle className="w-4 h-4 text-red-400" />
+      )}
+      <span className={met ? 'text-green-700' : 'text-red-600'}>{text}</span>
+    </div>
+  );
 
   return (
     <div className="min-h-screen flex">
@@ -177,8 +220,14 @@ function Register() {
                   onChange={handleChange}
                   className="input-field pl-12"
                   required
-                  minLength={6}
+                  minLength={8}
                 />
+              </div>
+              <div className="mt-3 space-y-2">
+                <PasswordRequirement met={hasMinLength} text="At least 8 characters" />
+                <PasswordRequirement met={hasUppercase} text="At least one uppercase letter" />
+                <PasswordRequirement met={hasLowercase} text="At least one lowercase letter" />
+                <PasswordRequirement met={hasNumber} text="At least one number" />
               </div>
             </div>
 
@@ -193,6 +242,7 @@ function Register() {
                   onChange={handleChange}
                   className="input-field pl-12"
                   required
+                  minLength={8}
                 />
               </div>
             </div>

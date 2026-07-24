@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const requiredEnvVars = ['MONGODB_URI', 'JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET'];
+const requiredEnvVars = ['MONGODB_URI', 'JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET', 'PORT', 'CORS_ORIGIN'];
 
 const missingEnvVars = requiredEnvVars.filter((key) => !process.env[key]);
 
@@ -12,7 +12,7 @@ if (missingEnvVars.length > 0) {
 
 export const config = {
   env: process.env.NODE_ENV || 'development',
-  port: process.env.PORT || 5002,
+  port: parseInt(process.env.PORT, 10),
   mongodbUri: process.env.MONGODB_URI,
   jwt: {
     accessSecret: process.env.JWT_ACCESS_SECRET,
@@ -34,5 +34,5 @@ export const config = {
     authToken: process.env.TWILIO_AUTH_TOKEN,
     whatsappNumber: process.env.TWILIO_WHATSAPP_NUMBER,
   },
-  corsOrigin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['http://localhost:5173'],
+  corsOrigin: process.env.CORS_ORIGIN.split(','),
 };

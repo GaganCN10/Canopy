@@ -4,6 +4,8 @@ import MainLayout from './layouts/MainLayout';
 import Home from './pages/Home';
 import Login from './features/auth/Login';
 import Register from './features/auth/Register';
+import ForgotPassword from './features/auth/ForgotPassword';
+import ResetPassword from './features/auth/ResetPassword';
 import Profile from './pages/Profile';
 import AdminUsers from './pages/AdminUsers';
 import AdminSpecies from './pages/AdminSpecies';
@@ -33,6 +35,8 @@ function App() {
               <Route index element={<Home />} />
               <Route path="login" element={<Login />} />
               <Route path="register" element={<Register />} />
+              <Route path="forgot-password" element={<ForgotPassword />} />
+              <Route path="reset-password" element={<ResetPassword />} />
               <Route path="unauthorized" element={<h1>Unauthorized</h1>} />
               <Route path="species" element={<Species />} />
               <Route path="sightings" element={<Sightings />} />

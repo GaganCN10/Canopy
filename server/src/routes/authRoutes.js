@@ -4,6 +4,8 @@ import {
   registerUser,
   loginUser,
   refreshToken,
+  forgotPasswordHandler,
+  resetPasswordHandler,
   logoutUser,
   getProfile,
 } from '../controllers/authController.js';
@@ -28,6 +30,15 @@ router.post('/login', strictRateLimit, validate([
 router.post('/refresh', rateLimit(15 * 60 * 1000, 20), validate([
   body('refreshToken').notEmpty().withMessage('Refresh token is required'),
 ]), refreshToken);
+
+router.post('/forgot-password', strictRateLimit, validate([
+  body('email').isEmail().withMessage('Valid email is required'),
+]), forgotPasswordHandler);
+
+router.post('/reset-password', rateLimit(15 * 60 * 1000, 10), validate([
+  body('token').notEmpty().withMessage('Reset token is required'),
+  body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
+]), resetPasswordHandler);
 
 router.post('/logout', authMiddleware, validate([
   body('refreshToken').notEmpty().withMessage('Refresh token is required'),

@@ -138,6 +138,11 @@ function Login() {
               Create one
             </Link>
           </p>
+          <p className="mt-2 text-center text-sm text-canopy-ink-900/70">
+            <Link to="/forgot-password" className="text-canopy-forest-600 font-medium hover:text-canopy-forest-800 transition-colors">
+              Forgot password?
+            </Link>
+          </p>
         </motion.div>
       </div>
     </div>

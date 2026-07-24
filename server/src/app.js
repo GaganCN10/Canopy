@@ -66,7 +66,7 @@ app.use(helmet({
       scriptSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", 'data:', 'https:'],
-      connectSrc: ["'self'", ...(config.corsOrigin.includes('http://localhost:5173') ? ['http://localhost:5173'] : [])],
+      connectSrc: ["'self'", ...config.corsOrigin],
       fontSrc: ["'self'", 'data:'],
       objectSrc: ["'none'"],
       mediaSrc: ["'self'"],

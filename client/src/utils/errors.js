@@ -75,14 +75,18 @@ const getErrorMessage = (error) => {
   if (!error) return null;
 
   const code = error.code || error.response?.data?.code;
-  if (code && ERROR_MESSAGES[code]) {
-    return ERROR_MESSAGES[code];
+  const serverMessage = error.response?.data?.message || error.message || '';
+  const mappedMessage = ERROR_MESSAGES[code] || {};
+
+  if (code && mappedMessage.title) {
+    return {
+      title: mappedMessage.title,
+      message: serverMessage || mappedMessage.message,
+      remedy: mappedMessage.remedy,
+    };
   }
 
-  const status = error.response?.status;
-  const message = error.message || error.response?.data?.message || '';
-
-  if (error.code === 'ECONNABORTED' || message.toLowerCase().includes('timeout')) {
+  if (error.code === 'ECONNABORTED' || serverMessage.toLowerCase().includes('timeout')) {
     return {
       title: 'Request Timeout',
       message: 'The request took too long to complete.',
@@ -98,10 +102,12 @@ const getErrorMessage = (error) => {
     };
   }
 
+  const status = error.response?.status;
+
   if (status === 401) {
     return {
       title: 'Unauthorized',
-      message: message || 'Your session has expired.',
+      message: serverMessage || 'Your session has expired.',
       remedy: 'Please log in again.',
     };
   }
@@ -109,7 +115,7 @@ const getErrorMessage = (error) => {
   if (status === 403) {
     return {
       title: 'Access Denied',
-      message: message || error.response?.data?.message || 'You do not have permission to access this resource.',
+      message: serverMessage || 'You do not have permission to access this resource.',
       remedy: 'If you believe this is an error, contact an administrator. Otherwise, log out and try again with a different account.',
     };
   }
@@ -117,7 +123,7 @@ const getErrorMessage = (error) => {
   if (status === 404) {
     return {
       title: 'Not Found',
-      message: message || 'The requested resource was not found.',
+      message: serverMessage || 'The requested resource was not found.',
       remedy: 'Please check the URL or go back to the home page.',
     };
   }
@@ -125,7 +131,7 @@ const getErrorMessage = (error) => {
   if (status === 422 || status === 400) {
     return {
       title: 'Invalid Input',
-      message: message || 'Please correct the form errors.',
+      message: serverMessage || 'Please correct the form errors.',
       remedy: 'Check the highlighted fields and try again.',
     };
   }
@@ -149,14 +155,14 @@ const getErrorMessage = (error) => {
   if (status >= 500) {
     return {
       title: 'Server Error',
-      message: message || 'Something went wrong on our end.',
+      message: serverMessage || 'Something went wrong on our end.',
       remedy: 'Please try again in a few minutes. If the issue persists, contact support.',
     };
   }
 
   return {
     title: 'Error',
-    message: message || 'An unexpected error occurred.',
+    message: serverMessage || 'An unexpected error occurred.',
     remedy: 'Please try again or contact support if the issue continues.',
   };
 };

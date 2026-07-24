@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import User from '../models/User.js';
 import { config } from '../config/env.js';
 import logger from '../utils/logger.js';
@@ -22,16 +23,28 @@ const generateTokens = (userId) => {
 
 const validatePasswordStrength = (password) => {
   if (!password || password.length < 8) {
-    throw new Error('Password must be at least 8 characters long');
+    const error = new Error('Password must be at least 8 characters long');
+    error.statusCode = 400;
+    error.code = 'VAL_001';
+    throw error;
   }
   if (!/[A-Z]/.test(password)) {
-    throw new Error('Password must contain at least one uppercase letter');
+    const error = new Error('Password must contain at least one uppercase letter');
+    error.statusCode = 400;
+    error.code = 'VAL_001';
+    throw error;
   }
   if (!/[a-z]/.test(password)) {
-    throw new Error('Password must contain at least one lowercase letter');
+    const error = new Error('Password must contain at least one lowercase letter');
+    error.statusCode = 400;
+    error.code = 'VAL_001';
+    throw error;
   }
   if (!/\d/.test(password)) {
-    throw new Error('Password must contain at least one number');
+    const error = new Error('Password must contain at least one number');
+    error.statusCode = 400;
+    error.code = 'VAL_001';
+    throw error;
   }
 };
 
@@ -142,5 +155,39 @@ export const getUserById = async (userId) => {
   if (!user) {
     throw new Error('User not found');
   }
+  return user;
+};
+
+export const forgotPassword = async (email) => {
+  const user = await User.findOne({ email });
+  if (!user) {
+    // Don't reveal whether email exists
+    return;
+  }
+
+  const resetToken = user.generatePasswordResetToken();
+  await user.save();
+
+  return { user, resetToken };
+};
+
+export const resetPassword = async (token, newPassword) => {
+  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+  const user = await User.findOne({
+    passwordResetToken: hashedToken,
+    passwordResetExpires: { $gt: Date.now() },
+  });
+
+  if (!user) {
+    throw new Error('Invalid or expired reset token');
+  }
+
+  user.password = newPassword;
+  user.passwordResetToken = undefined;
+  user.passwordResetExpires = undefined;
+  user.loginAttempts = 0;
+  user.lockUntil = undefined;
+  await user.save();
+
   return user;
 };
