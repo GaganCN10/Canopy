@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { motion, useScroll } from 'framer-motion';
-import { Leaf, Menu, X, Bell } from 'lucide-react';
+import { Leaf, Menu, X, Bell, User } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { getNotifications, markAllNotificationsAsRead } from '../features/notifications/notificationApi';
 
@@ -114,16 +114,28 @@ function MainLayout() {
 
             <div className="hidden lg:flex items-center gap-4">
               {isAuthenticated && (
-                <div className="relative">
-                  <button
-                    onClick={() => setNotificationsOpen(!notificationsOpen)}
-                    className="relative p-2 rounded-full text-canopy-ink-900/70 hover:text-canopy-forest-600 hover:bg-canopy-sand-100 transition-colors"
+                <>
+                  <Link
+                    to="/profile"
+                    className={`flex items-center gap-1 text-sm font-medium transition-colors duration-200 ${
+                      location.pathname === '/profile'
+                        ? 'text-canopy-forest-600'
+                        : 'text-canopy-ink-900/70 hover:text-canopy-forest-600'
+                    }`}
                   >
-                    <Bell className="w-5 h-5" />
-                    {unreadCount > 0 && (
-                      <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-canopy-clay-500 rounded-full border-2 border-canopy-sand-50" />
-                    )}
-                  </button>
+                    <User className="w-4 h-4" />
+                    Profile
+                  </Link>
+                  <div className="relative">
+                    <button
+                      onClick={() => setNotificationsOpen(!notificationsOpen)}
+                      className="relative p-2 rounded-full text-canopy-ink-900/70 hover:text-canopy-forest-600 hover:bg-canopy-sand-100 transition-colors"
+                    >
+                      <Bell className="w-5 h-5" />
+                      {unreadCount > 0 && (
+                        <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-canopy-clay-500 rounded-full border-2 border-canopy-sand-50" />
+                      )}
+                    </button>
                   {notificationsOpen && (
                     <div className="absolute right-0 mt-3 w-80 bg-white border border-canopy-mist-200 rounded-2xl shadow-ambient-lg z-50">
                       <div className="flex items-center justify-between px-4 py-3 border-b border-canopy-mist-200">
@@ -157,6 +169,7 @@ function MainLayout() {
                     </div>
                   )}
                 </div>
+                </>
               )}
               <Link to="/tips/submit" className="btn-clay text-sm">
                 Report an Incident
@@ -193,6 +206,19 @@ function MainLayout() {
                   {item.label}
                 </Link>
               ))}
+              {isAuthenticated && (
+                <Link
+                  to="/profile"
+                  onClick={() => setMobileOpen(false)}
+                  className={`block px-4 py-3 rounded-xl text-base font-medium ${
+                    location.pathname === '/profile'
+                      ? 'bg-canopy-sand-100 text-canopy-forest-600'
+                      : 'text-canopy-ink-900/80 hover:bg-canopy-sand-100'
+                  }`}
+                >
+                  Profile
+                </Link>
+              )}
               <div className="pt-2 border-t border-canopy-mist-200 mt-2">
                 <p className="px-4 text-xs font-semibold text-canopy-ink-900/50 uppercase tracking-wider mb-2">Report</p>
                 {REPORT_ITEMS.map((item) => (

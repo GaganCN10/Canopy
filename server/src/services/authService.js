@@ -191,3 +191,26 @@ export const resetPassword = async (token, newPassword) => {
 
   return user;
 };
+
+export const changePassword = async (userId, currentPassword, newPassword) => {
+  const user = await User.findById(userId).select('+password');
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  const isCurrentPasswordCorrect = await user.comparePassword(currentPassword);
+  if (!isCurrentPasswordCorrect) {
+    throw new Error('Current password is incorrect');
+  }
+
+  if (currentPassword === newPassword) {
+    throw new Error('New password must be different from current password');
+  }
+
+  validatePasswordStrength(newPassword);
+
+  user.password = newPassword;
+  await user.save();
+
+  return user;
+};

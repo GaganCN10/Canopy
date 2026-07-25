@@ -44,6 +44,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    photo: {
+      type: String,
+      trim: true,
+    },
     passwordResetToken: {
       type: String,
       select: false,

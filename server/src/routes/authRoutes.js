@@ -8,6 +8,7 @@ import {
   resetPasswordHandler,
   logoutUser,
   getProfile,
+  changePasswordHandler,
 } from '../controllers/authController.js';
 import { authMiddleware } from '../middlewares/auth.js';
 import { validate } from '../middlewares/validate.js';
@@ -45,5 +46,10 @@ router.post('/logout', authMiddleware, validate([
 ]), logoutUser);
 
 router.get('/me', authMiddleware, getProfile);
+
+router.put('/me/password', authMiddleware, validate([
+  body('currentPassword').notEmpty().withMessage('Current password is required'),
+  body('newPassword').isLength({ min: 8 }).withMessage('New password must be at least 8 characters'),
+]), changePasswordHandler);
 
 export default router;

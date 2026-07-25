@@ -16,6 +16,7 @@ router.put('/me', authMiddleware, validate([
   body('lastName').optional().notEmpty(),
   body('phone').optional().notEmpty(),
   body('organization').optional().notEmpty(),
+  body('photo').optional().isString(),
 ]), updateUserProfile);
 
 router.get('/', authMiddleware, roleGuard('admin'), validate([

@@ -2,7 +2,7 @@ import User from '../models/User.js';
 import logger from '../utils/logger.js';
 
 export const updateProfile = async (userId, updateData) => {
-  const allowedFields = ['firstName', 'lastName', 'phone', 'organization'];
+  const allowedFields = ['firstName', 'lastName', 'phone', 'organization', 'photo'];
   const update = {};
   for (const field of allowedFields) {
     if (updateData[field] !== undefined) {

@@ -29,3 +29,8 @@ export const getProfile = async () => {
   const { data } = await api.get('/auth/me');
   return data;
 };
+
+export const changePassword = async (currentPassword, newPassword) => {
+  const { data } = await api.put('/auth/me/password', { currentPassword, newPassword });
+  return data;
+};

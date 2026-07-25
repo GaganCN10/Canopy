@@ -5,6 +5,7 @@ import {
   refreshAccessToken,
   forgotPassword,
   resetPassword,
+  changePassword,
 } from '../services/authService.js';
 import { sendSuccess, sendError } from '../utils/response.js';
 import logger from '../utils/logger.js';
@@ -155,6 +156,23 @@ export const resetPasswordHandler = async (req, res, next) => {
     sendSuccess(res, 200, 'Password reset successfully. You can now log in with your new password.');
   } catch (error) {
     logger.error('Reset password error:', error);
+    next(error);
+  }
+};
+
+export const changePasswordHandler = async (req, res, next) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return sendError(res, 400, 'Validation failed', errors.array());
+    }
+
+    const { currentPassword, newPassword } = req.body;
+    await changePassword(req.user._id, currentPassword, newPassword);
+
+    sendSuccess(res, 200, 'Password changed successfully');
+  } catch (error) {
+    logger.error('Change password error:', error);
     next(error);
   }
 };
