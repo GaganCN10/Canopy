@@ -8,6 +8,7 @@ import { logout } from '../features/auth/authSlice';
 import { changePassword as changePasswordApi } from '../features/auth/authApi';
 import { getMyMissions } from '../features/missions/missionApi';
 import { getQuizAttempts } from '../features/articles/articleApi';
+import { getMyRoleRequests } from '../features/role-requests/roleRequestApi';
 import { StatusBadge } from '../components/ui';
 import api from '../api/axiosInstance';
 
@@ -35,6 +36,8 @@ function Profile() {
   const [missionsLoading, setMissionsLoading] = useState(false);
   const [quizAttempts, setQuizAttempts] = useState([]);
   const [quizAttemptsLoading, setQuizAttemptsLoading] = useState(false);
+  const [roleRequests, setRoleRequests] = useState([]);
+  const [roleRequestsLoading, setRoleRequestsLoading] = useState(false);
 
   const fileInputRef = useRef(null);
   const dispatch = useDispatch();
@@ -49,6 +52,7 @@ function Profile() {
     loadProfile();
     loadMyMissions();
     loadQuizAttempts();
+    loadRoleRequests();
   }, [isAuthenticated]);
 
   const loadMyMissions = async () => {
@@ -72,6 +76,18 @@ function Profile() {
       console.error('Failed to load quiz attempts', err);
     } finally {
       setQuizAttemptsLoading(false);
+    }
+  };
+
+  const loadRoleRequests = async () => {
+    try {
+      setRoleRequestsLoading(true);
+      const result = await getMyRoleRequests();
+      setRoleRequests(result.data || []);
+    } catch (err) {
+      console.error('Failed to load role requests', err);
+    } finally {
+      setRoleRequestsLoading(false);
     }
   };
 
@@ -227,6 +243,58 @@ function Profile() {
             >
               {error}
             </motion.div>
+          )}
+
+          {user?.role === 'public' || user?.role === 'citizen' ? (
+            <div className="mb-6 p-4 bg-canopy-sand-50 rounded-xl">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium text-canopy-forest-950 mb-1">Need elevated access?</h3>
+                  <p className="text-sm text-canopy-ink-900/70">Request a role as Researcher, Ranger, or Rescue Center Staff.</p>
+                </div>
+                <button onClick={() => navigate('/roles/request')} className="btn-primary whitespace-nowrap">
+                  Request a Role
+                </button>
+              </div>
+            </div>
+          ) : null}
+
+          {roleRequests.length > 0 && (
+            <div className="mb-6 space-y-3">
+              <h3 className="font-medium text-canopy-forest-950">Your Role Requests</h3>
+              {roleRequests.map((request) => (
+                <div key={request._id} className="p-4 bg-canopy-sand-50 rounded-xl">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-canopy-forest-950">
+                        {request.requestedRole.replace('_', ' ').toUpperCase()}
+                      </p>
+                      <p className="text-xs text-canopy-ink-900/50">
+                        Submitted {new Date(request.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      request.status === 'pending' ? 'bg-amber-50 text-amber-700' :
+                      request.status === 'approved' ? 'bg-green-50 text-green-700' :
+                      'bg-red-50 text-red-700'
+                    }`}>
+                      {request.status}
+                    </span>
+                  </div>
+                  {request.status === 'approved' && (
+                    <button
+                      onClick={() => navigate(`/roles/profile?role=${request.requestedRole}`)}
+                      className="mt-3 text-sm text-canopy-forest-600 hover:underline"
+                    >
+                      Complete your role profile
+                    </button>
+                  )}
+                  {request.status === 'rejected' && request.rejectionReason && (
+                    <p className="text-xs text-red-600 mt-2">Reason: {request.rejectionReason}</p>
+                  )}
+                </div>
+              ))}
+            </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">

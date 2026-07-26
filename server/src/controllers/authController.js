@@ -21,7 +21,16 @@ export const registerUser = async (req, res, next) => {
 
     const { email, password, firstName, lastName, phone, organization } = req.body;
 
-    const result = await register({ email, password, firstName, lastName, phone, organization });
+    const result = await register({
+      email,
+      password,
+      firstName,
+      lastName,
+      phone,
+      organization,
+      userAgent: req.get('user-agent') || '',
+      ipAddress: req.ip || req.connection.remoteAddress || '',
+    });
 
     sendSuccess(res, 201, 'User registered successfully', result);
   } catch (error) {
@@ -39,7 +48,7 @@ export const loginUser = async (req, res, next) => {
 
     const { email, password } = req.body;
 
-    const result = await login(email, password);
+    const result = await login(email, password, req.get('user-agent') || '', req.ip || req.connection.remoteAddress || '');
 
     sendSuccess(res, 200, 'Login successful', result);
   } catch (error) {

@@ -45,8 +45,10 @@ function MainLayout() {
   const loadNotifications = async () => {
     try {
       const result = await getNotifications({ limit: 5 });
-      setNotifications(result.data.data.notifications || []);
-      setUnreadCount(result.data.data.unreadCount || 0);
+      const notifications = result?.data?.data?.notifications || [];
+      const unreadCount = result?.data?.data?.unreadCount || 0;
+      setNotifications(notifications);
+      setUnreadCount(unreadCount);
     } catch (err) {
       console.error('Failed to load notifications', err);
     }
@@ -127,6 +129,16 @@ function MainLayout() {
                   >
                     <User className="w-4 h-4" />
                     Profile
+                  </Link>
+                  <Link
+                    to="/sessions"
+                    className={`flex items-center gap-1 text-sm font-medium transition-colors duration-200 ${
+                      location.pathname === '/sessions'
+                        ? 'text-canopy-forest-600'
+                        : 'text-canopy-ink-900/70 hover:text-canopy-forest-600'
+                    }`}
+                  >
+                    Sessions
                   </Link>
                   <div className="relative">
                     <button

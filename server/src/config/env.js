@@ -35,4 +35,5 @@ export const config = {
     whatsappNumber: process.env.TWILIO_WHATSAPP_NUMBER,
   },
   corsOrigin: process.env.CORS_ORIGIN.split(','),
+  adminNotificationEmail: process.env.ADMIN_NOTIFICATION_EMAIL || 'gcn3888@gmail.com',
 };

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
 import Home from './pages/Home';
@@ -11,6 +11,8 @@ import AdminUsers from './pages/AdminUsers';
 import AdminSpecies from './pages/AdminSpecies';
 import Species from './pages/Species';
 import AdminGeofences from './pages/AdminGeofences';
+import AdminRoleRequests from './pages/AdminRoleRequests';
+import AdminInviteCodes from './pages/AdminInviteCodes';
 import Sightings from './pages/Sightings';
 import ReportSighting from './pages/ReportSighting';
 import MapPage from './pages/MapPage';
@@ -31,8 +33,28 @@ import CreateMission from './pages/CreateMission';
 import Articles from './pages/Articles';
 import ArticleDetail from './pages/ArticleDetail';
 import CreateArticle from './pages/CreateArticle';
+import RequestRole from './pages/RequestRole';
+import RoleProfileForm from './pages/RoleProfileForm';
+import Sessions from './pages/Sessions';
+import { useDispatch, useSelector } from 'react-redux';
+import { initializeAuth } from './features/auth/authSlice';
 
 function App() {
+  const dispatch = useDispatch();
+  const { loading } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    dispatch(initializeAuth());
+  }, [dispatch]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="spinner" />
+      </div>
+    );
+  }
+
   return (
     <ErrorBoundary>
       <ToastProvider>
@@ -69,6 +91,24 @@ function App() {
                   <CreateArticle />
                 </ProtectedRoute>
               } />
+              <Route path="roles/request" element={
+                <ProtectedRoute>
+                  <RequestRole />
+                </ProtectedRoute>
+              } />
+              <Route path="roles/profile" element={
+                <ProtectedRoute>
+                  <RoleProfileForm />
+                </ProtectedRoute>
+              } />
+              <Route
+                path="sessions"
+                element={
+                  <ProtectedRoute>
+                    <Sessions />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="profile"
                 element={
@@ -106,6 +146,22 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
                     <AdminGeofences />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="admin/role-requests"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminRoleRequests />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="admin/invite-codes"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminInviteCodes />
                   </ProtectedRoute>
                 }
               />

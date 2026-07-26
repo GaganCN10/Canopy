@@ -1,6 +1,11 @@
+import { config } from '../config/env.js';
+
 const rateLimitMap = new Map();
 
 export const rateLimit = (windowMs = 15 * 60 * 1000, max = 100) => {
+  if (config.env === 'development') {
+    return (req, res, next) => next();
+  }
   return (req, res, next) => {
     const key = req.ip || req.connection.remoteAddress;
     const now = Date.now();

@@ -91,8 +91,13 @@ export default function CanopyAuth() {
   const { showSuccess, showError } = useToast();
   const { isAuthenticated } = useSelector((state) => state.auth);
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate]);
+
   if (isAuthenticated) {
-    navigate('/');
     return null;
   }
 

@@ -1,11 +1,14 @@
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import User from '../models/User.js';
+import Session from '../models/Session.js';
 import { config } from '../config/env.js';
 import logger from '../utils/logger.js';
 
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCK_TIME = 30 * 60 * 1000;
+
+const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
 
 const generateTokens = (userId) => {
   const accessToken = jwt.sign(
@@ -48,7 +51,7 @@ const validatePasswordStrength = (password) => {
   }
 };
 
-export const register = async ({ email, password, firstName, lastName, phone, organization }) => {
+export const register = async ({ email, password, firstName, lastName, phone, organization, userAgent, ipAddress }) => {
   const existingUser = await User.findOne({ email });
   if (existingUser) {
     const error = new Error('User already exists with this email');
@@ -71,6 +74,15 @@ export const register = async ({ email, password, firstName, lastName, phone, or
 
   const tokens = generateTokens(user._id);
 
+  await Session.create({
+    user: user._id,
+    tokenHash: hashToken(tokens.accessToken),
+    refreshTokenHash: hashToken(tokens.refreshToken),
+    userAgent: userAgent || '',
+    ipAddress: ipAddress || '',
+    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+  });
+
   await user.save();
 
   return {
@@ -79,7 +91,7 @@ export const register = async ({ email, password, firstName, lastName, phone, or
   };
 };
 
-export const login = async (email, password) => {
+export const login = async (email, password, userAgent, ipAddress) => {
   const user = await User.findOne({ email }).select('+password');
   if (!user) {
     const error = new Error('Invalid credentials');
@@ -122,6 +134,15 @@ export const login = async (email, password) => {
 
   const tokens = generateTokens(user._id);
 
+  await Session.create({
+    user: user._id,
+    tokenHash: hashToken(tokens.accessToken),
+    refreshTokenHash: hashToken(tokens.refreshToken),
+    userAgent: userAgent || '',
+    ipAddress: ipAddress || '',
+    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+  });
+
   return {
     user,
     ...tokens,
@@ -148,6 +169,41 @@ export const refreshAccessToken = (refreshToken) => {
 
 export const logout = async (refreshToken) => {
   addToBlacklist(refreshToken);
+};
+
+export const createSession = async (userId, accessToken, refreshToken, userAgent, ipAddress) => {
+  const session = await Session.create({
+    user: userId,
+    tokenHash: hashToken(accessToken),
+    refreshTokenHash: hashToken(refreshToken),
+    userAgent: userAgent || '',
+    ipAddress: ipAddress || '',
+    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+  });
+  return session;
+};
+
+export const getUserSessions = async (userId) => {
+  return await Session.find({ user: userId, isRevoked: false }).sort({ createdAt: -1 });
+};
+
+export const revokeSession = async (userId, sessionId) => {
+  const session = await Session.findOne({ _id: sessionId, user: userId });
+  if (!session) {
+    throw new Error('Session not found');
+  }
+  session.isRevoked = true;
+  session.revokedAt = new Date();
+  await session.save();
+  return session;
+};
+
+export const revokeAllSessions = async (userId, currentSessionId) => {
+  const filter = { user: userId, isRevoked: false };
+  if (currentSessionId) {
+    filter._id = { $ne: currentSessionId };
+  }
+  return await Session.updateMany(filter, { isRevoked: true, revokedAt: new Date() });
 };
 
 export const getUserById = async (userId) => {

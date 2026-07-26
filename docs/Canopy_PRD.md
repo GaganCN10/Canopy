@@ -41,6 +41,7 @@ Build a single, unified web platform that consolidates the core software-solvabl
 - Movement/Corridor Visualization (via imported/open GPS telemetry data)
 - Conservation Missions & Volunteer Collaboration (mission creation, threads, task boards, membership management)
 - Conservation Articles & Learning Modules (authored articles, optional quizzes with scored results)
+- Role Verification & Elevation Requests (evidence submission, Admin review queue, email-based decision links, post-approval role profile)
 
 ### 2.2 In Scope (AI/ML Modules — Feasibility-Verified, see Section 3)
 - Species Image Identification
@@ -209,6 +210,8 @@ conserveos/
 
 > **Footnote:** Article authoring is gated to Researcher/NGO, Ranger/Field Staff, and Admin roles; reading articles and taking quizzes is open to all visitors. See Section 13.3 for details.
 
+> **Footnote:** All non-Admin elevated roles are reachable only via the reviewed Role Verification & Elevation Request flow (Section 14); there is no self-service role selection at registration. Admin remains Admin-panel-only granted.
+
 ---
 
 ## 7. Functional Requirements by Module
@@ -228,6 +231,7 @@ conserveos/
 11. **ML-Backed Modules** — Per Section 3, integrated in later phases as described.
 12. **Conservation Missions Module** — Mission creation, discovery/join, per-Mission threads, task boards, membership management, and profile integration. See Section 12 for full detail.
 13. **Conservation Articles & Learning Modules** — Authored articles, optional quizzes with scored results, and attempt history. See Section 13 for full detail.
+14. **Role Verification & Elevation Requests** — Evidence submission, Admin review queue, email-based decision links, post-approval role profile. See Section 14 for full detail.
 
 ---
 
@@ -238,7 +242,7 @@ conserveos/
 - **Validation:** All API inputs validated (Joi on server, Pydantic on ml-service) — no unvalidated data reaches the database or model.
 - **Error Handling:** Centralized error-handling middleware on Express; consistent error response shape across all services.
 - **Testing:** Minimum unit test coverage on services/controllers for each backend module; ml-service inference endpoints must have at least one integration test per model.
-- **Security:** Passwords hashed (bcrypt), JWT secrets in `.env`, rate limiting on public endpoints (anti-poaching tips, auth), input sanitization against NoSQL injection.
+- **Security:** Passwords hashed (bcrypt), JWT secrets in `.env`, rate limiting on public endpoints (anti-poaching tips, auth), input sanitization against NoSQL injection. Verification documents (RoleRequest) are stored access-controlled and never exposed via public or unauthenticated URLs; decision tokens follow the same hashed, single-use, expiring pattern as password-reset tokens.
 - **Documentation:** Every module ships with a `README.md` in its folder explaining purpose and API contract; root `docs/` maintains overall architecture and an updated API reference.
 - **No Deployment Artifacts Required This Phase:** `docker-compose.yml` is permitted for local multi-service convenience only — not a deployment deliverable.
 
@@ -366,6 +370,19 @@ conserveos/
 ### PHASE 17.6 — Articles & Quizzes (Frontend)
 - Articles listing + reader pages, Article Editor with embedded Quiz Builder, Quiz-taking component, Results component, "My Learning" tab on Profile.
 - **DoD:** An authorized user can write an article with a 3-question quiz through the UI, publish it, and a separate logged-in user can read it, take the quiz, and see a real results breakdown end-to-end.
+
+### PHASE 17.7 — Role Verification & Elevation Requests (Backend)
+- `RoleRequest`, `RoleProfile`, `InviteCode` Mongoose schemas per Section 14.4.
+- Submission endpoint with GridFS document upload, signed-token generation, Nodemailer trigger to `ADMIN_NOTIFICATION_EMAIL`.
+- Token-gated decision endpoint (`GET /role-requests/:id/decide`) + Admin Panel manual decision endpoint (`PATCH /role-requests/:id`) — both converge on the same service function to guarantee consistent audit logging regardless of channel.
+- Role Profile submission endpoint that flips `user.role` on success.
+- **DoD:** A user can submit a role request with a document via API; an email is genuinely sent (verified against a real SMTP dev config, e.g., Mailtrap); clicking the signed approve link (or using the Admin Panel endpoint) changes the request status and is logged with a real `reviewedBy`; submitting the Role Profile afterward genuinely changes `user.role`, verified via a subsequent protected-route test.
+
+### PHASE 17.8 — Role Verification & Elevation Requests (Frontend)
+- "Request a Role" form + status widget on Profile.
+- Role Profile form triggered post-approval.
+- Admin Panel: Role Requests queue tab (with document viewer) + Invite Codes tab.
+- **DoD:** End-to-end walkthrough — a Citizen/Volunteer submits a role request with a document, Admin receives and reviews it in the Admin Panel (or via the emailed link in a dev inbox), approves it, the user completes their Role Profile, and their account now has the new role's permissions active in the UI.
 
 ### PHASE 18 — Conservation Missions (Backend)
 - `Mission`, `MissionMembership`, `MissionThreadPost`, `MissionActionItem` Mongoose schemas per Section 12.5.
@@ -807,6 +824,156 @@ Note the deliberate server-side stripping of correct answers on the question-fet
 - **Section 6 (User Roles & Permissions):** add a footnote referencing 13.3 — article authoring is gated to Researcher/NGO, Ranger, and Admin roles; reading is public.
 - **Section 7 (Functional Requirements by Module):** add item `13. Conservation Articles & Learning Modules — see Section 13 for full detail.`
 - **Section 9 (Development Phases):** insert Phases 17.5 and 17.6 as described in 13.9.
+
+### 14.10 Small Edits to Existing Sections
+
+- **Section 2.1 (In Scope — Software Modules):** add — `Role Verification & Elevation Requests (evidence submission, Admin review queue, email-based decision links, post-approval role profile)`.
+- **Section 6 (User Roles & Permissions):** add a footnote referencing 14.3 — all non-Admin elevated roles are reachable only via this reviewed request flow; there is no self-service role selection at registration.
+- **Section 7 (Functional Requirements by Module):** add item `14. Role Verification & Elevation Requests — see Section 14 for full detail.`
+- **Section 8 (Non-Functional — Security):** add — "Verification documents (RoleRequest) are stored access-controlled and never exposed via public or unauthenticated URLs; decision tokens follow the same hashed, single-use, expiring pattern as password-reset tokens."
+- **Section 9 (Development Phases):** insert Phases 17.7 and 17.8 as described in 14.9.
+
+---
+
+## 14. Conservation Articles & Learning Modules
+
+> **Insertion point:** Added as a new Section 14 after Section 13 — Conservation Missions. Text-and-quiz only — **no image upload requirement** for this module.
+
+### 14.1 Purpose
+
+Give the platform a home for **structured knowledge**, not just live data — articles that teach core wildlife conservation concepts (species identification basics, habitat types, human-wildlife coexistence, why poaching reporting matters, how citizen science works, invasive species, etc.), each authored by a credited person, and each optionally paired with a short quiz so a reader can check their understanding and see a result at the end. This turns passive reading into a small, self-contained learning module rather than a plain blog.
+
+### 14.2 Core Concepts
+
+| Concept | Definition |
+|---|---|
+| **Article** | A single piece of long-form written content: title, body (rich text), author, topic/category, read time, published/draft status. Text-only — no image fields. |
+| **Author** | The platform user credited for the article. Authoring is restricted to trusted roles (see 14.3) — this is curated content, not open user-generated posts. |
+| **Quiz** | An optional set of questions attached to one Article. If present, it's shown after the article body. |
+| **Quiz Question** | Multiple-choice (single-correct or multi-correct) or True/False question tied to a quiz. |
+| **Quiz Attempt** | A record of one user completing one quiz: their answers, score, and timestamp — shown back to them as a **Results** screen immediately after submission. |
+
+### 14.3 Role Model — Addendum to Section 6
+
+No new global role. Authoring rights are gated on existing roles:
+
+| Action | Allowed Roles |
+|---|---|
+| Read published articles + take quizzes | Public/Visitor and above (no login required to read; login required to save/see quiz result history) |
+| Create/edit/publish an Article | **Researcher/NGO**, **Ranger/Field Staff**, **Admin** (same trusted tier already used for content-quality-sensitive actions elsewhere in the PRD) |
+| Create/edit a Quiz on an Article | Same as above — quiz authoring is bundled with article authoring, not a separate role |
+| Delete/unpublish any Article | **Admin** only |
+
+This keeps article quality high without introducing a brand-new "Editor" role the RBAC table doesn't already anticipate.
+
+### 14.4 Functional Requirements
+
+1. **Browse Articles** — Public listing page: filter by topic/category (e.g., Species ID, Habitats, Human-Wildlife Coexistence, Anti-Poaching, Citizen Science, Ecosystem Basics), sort by newest/most-read, search by title/keyword.
+2. **Read an Article** — Clean reading view: title, author name (linked to a simple author byline, not a full profile requirement), estimated read time, published date, body content rendered from rich text.
+3. **Author/Edit an Article** — Rich text editor (heading levels, bold/italic, lists, links, blockquote) — no image embedding, per requirement. Draft/Published toggle. Only the author or Admin can edit; Admin can unpublish any article.
+4. **Attach a Quiz (optional)** — While authoring, the author can add a quiz: any number of questions, each with 2–6 options and one or more correct answers marked, plus an optional short explanation shown after the reader submits.
+5. **Take the Quiz** — Presented after the article body if one exists. Reader answers all questions, submits once (no changing after submit).
+6. **Results Screen** — Immediately after submission: score (e.g., "7/10 correct"), per-question breakdown (their answer vs. correct answer, plus the author's explanation if provided), and a simple pass/fail or score-band message if the author set a passing threshold. No further gamification (no leaderboard, no badges) — consistent with keeping this educational rather than points-driven.
+7. **Attempt History** — Logged-in users can see their own past quiz attempts and scores on their Profile page (reuse the existing Profile page from Section 7.6/Phase 6) — real record, not a mocked stat.
+8. **Retake Policy** — Configurable per quiz by the author: unlimited retakes (default) or single-attempt only.
+9. **Moderation** — Admin can unpublish/delete any article or quiz, same override pattern used elsewhere (Section 7.9).
+
+### 14.5 Data Model (MongoDB / Mongoose — consistent with Section 5 stack)
+
+```
+Article
+  _id
+  title, slug
+  body: rich text (stored as sanitized HTML or structured JSON, e.g., Tiptap/ProseMirror doc — no image node type registered)
+  topic: enum [species-id, habitats, coexistence, anti-poaching, citizen-science, ecosystems, other]
+  author: ObjectId → User
+  status: enum [draft, published]
+  readTimeMinutes: number (auto-estimated from word count)
+  publishedAt: date | null
+  createdAt, updatedAt
+
+Quiz
+  _id
+  article: ObjectId → Article (one-to-one)
+  passThresholdPercent: number | null   // null = no pass/fail, score-only
+  retakePolicy: enum [unlimited, single-attempt]
+  createdAt, updatedAt
+
+QuizQuestion
+  _id
+  quiz: ObjectId → Quiz
+  questionText: text
+  type: enum [single-choice, multi-choice, true-false]
+  options: [ { id, text } ]
+  correctOptionIds: [id]
+  explanation: text | null
+  order: number
+
+QuizAttempt
+  _id
+  quiz: ObjectId → Quiz
+  user: ObjectId → User
+  answers: [ { questionId, selectedOptionIds } ]
+  score: number, scorePercent: number
+  passed: boolean | null
+  submittedAt: date
+```
+
+Indexes: `Article.slug` unique, `Article.topic + status` compound, `QuizAttempt.quiz + user` compound (to enforce single-attempt retake policy).
+
+### 14.6 API Endpoints (Server — Express, under `/api/articles`)
+
+| Method | Route | Access |
+|---|---|---|
+| GET | `/articles` | Public (filters: topic, search; published only unless caller is author/Admin) |
+| GET | `/articles/:slug` | Public (published only unless caller is author/Admin) |
+| POST | `/articles` | Researcher/NGO, Ranger, Admin |
+| PATCH | `/articles/:id` | Author / Admin |
+| DELETE | `/articles/:id` | Admin |
+| POST | `/articles/:id/quiz` | Author / Admin |
+| PATCH | `/quizzes/:id` | Author / Admin |
+| GET | `/articles/:id/quiz` | Public (question text + options, **without** `correctOptionIds`/`explanation` — stripped server-side before send) |
+| POST | `/quizzes/:id/attempts` | Logged-in user (enforces retake policy) → returns score + full breakdown for the Results screen |
+| GET | `/users/me/quiz-attempts` | Logged-in user (own attempt history) |
+
+Note the deliberate server-side stripping of correct answers on the question-fetch endpoint — answers are only revealed in the attempt-submission response, so the quiz can't be "solved" by reading the network payload before submitting.
+
+### 14.7 Frontend (Client — feature-sliced, under `features/articles/`)
+
+- **Articles Listing Page** — Card grid, topic filter chips, search bar, "X min read" badges.
+- **Article Reader Page** — Clean typography-focused layout (title, author byline, date, read time, body), quiz section rendered below the body if one exists.
+- **Article Editor** (author-only) — Rich text editor (Tiptap or similar, headings/bold/italic/lists/links/blockquote only — no image toolbar button), topic selector, Draft/Publish toggle, embedded Quiz Builder (add/reorder/delete questions, mark correct options, add explanations).
+- **Quiz Component** — Question-by-question or single-scroll form, single submit action, disabled after submit.
+- **Results Component** — Score summary, per-question review with correct/incorrect indicators and explanation text, "Retake" button (if allowed) or "Attempt already used" state.
+- **My Learning** — Added to Profile page: list of past quiz attempts with scores and dates, linked back to the article.
+
+### 14.8 Non-Functional Notes
+
+- **No new infra** — reuses MongoDB and the existing Auth/RBAC middleware pattern; no file storage (GridFS) needed since this module is intentionally text-only.
+- **Content sanitization:** rich text body must be sanitized server-side (e.g., `sanitize-html` or a schema-restricted ProseMirror doc) before storage/render to prevent stored XSS — same discipline as any other user-authored HTML-adjacent content.
+- **Read time estimation:** simple word-count/200wpm calculation on save — real computation, not a placeholder number.
+- **Quiz integrity:** correct answers never sent to the client until after submission (see 14.6); single-attempt enforcement is server-side, not just UI-hidden.
+
+### 14.9 Development Phases — Addendum to Section 9
+
+*(Insert as a standalone pair of phases; no dependency on the Missions module. Can run in parallel with Phases 7–17.)*
+
+#### PHASE 17.5 — Articles & Quizzes (Backend)
+- `Article`, `Quiz`, `QuizQuestion`, `QuizAttempt` Mongoose schemas per Section 14.5.
+- CRUD endpoints for articles (draft/publish workflow), nested quiz/question management, attempt submission with server-side scoring and answer-stripping on the read endpoint.
+- Rich text sanitization pipeline.
+- **DoD:** An author can create, save as draft, and publish an article via API; a reader can fetch it, submit quiz answers, and receive a scored result — correct answers are verifiably absent from the pre-submission payload (checked via test).
+
+#### PHASE 17.6 — Articles & Quizzes (Frontend)
+- Articles listing + reader pages, Article Editor with embedded Quiz Builder, Quiz-taking component, Results component, "My Learning" tab on Profile.
+- **DoD:** An authorized user can write an article with a 3-question quiz through the UI, publish it, and a separate logged-in user can read it, take the quiz, and see a real results breakdown end-to-end.
+
+### 14.10 Small Edits to Existing Sections
+
+- **Section 2.1 (In Scope — Software Modules):** add — `Conservation Articles & Learning Modules (authored articles, optional quizzes with scored results)`.
+- **Section 6 (User Roles & Permissions):** add a footnote referencing 14.3 — article authoring is gated to Researcher/NGO, Ranger, and Admin roles; reading is public.
+- **Section 7 (Functional Requirements by Module):** add item `13. Conservation Articles & Learning Modules — see Section 13 for full detail.`
+- **Section 9 (Development Phases):** insert Phases 17.5 and 17.6 as described in 14.9.
 
 ---
 

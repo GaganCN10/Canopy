@@ -11,6 +11,8 @@ import notificationRoutes from './notificationRoutes.js';
 import uploadRoutes from './uploadRoutes.js';
 import missionRoutes from './missionRoutes.js';
 import articleRoutes from './articleRoutes.js';
+import roleRequestRoutes from './roleRequestRoutes.js';
+import sessionRoutes from './sessionRoutes.js';
 
 export default function mountRoutes(app) {
   app.use('/api/auth', authRoutes);
@@ -25,4 +27,6 @@ export default function mountRoutes(app) {
   app.use('/api/upload', uploadRoutes);
   app.use('/api/missions', missionRoutes);
   app.use('/api/articles', articleRoutes);
+  app.use('/api/role-requests', roleRequestRoutes);
+  app.use('/api/sessions', sessionRoutes);
 }
