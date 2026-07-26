@@ -11,7 +11,7 @@ const notificationSchema = new mongoose.Schema(
     type: {
       type: String,
       required: true,
-      enum: ['geofence_breach', 'tip_status_change', 'verification_result', 'rescue_update', 'system'],
+      enum: ['geofence_breach', 'tip_status_change', 'verification_result', 'rescue_update', 'system', 'mission_join_request', 'mission_join_approved', 'mission_thread_post', 'mission_mention', 'mission_task_assigned', 'mission_update_posted', 'mission_status_changed'],
     },
     title: {
       type: String,

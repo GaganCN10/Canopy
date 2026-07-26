@@ -6,6 +6,8 @@ import { useNavigate } from 'react-router-dom';
 import { getProfile, updateProfile } from '../features/admin/userApi';
 import { logout } from '../features/auth/authSlice';
 import { changePassword as changePasswordApi } from '../features/auth/authApi';
+import { getMyMissions } from '../features/missions/missionApi';
+import { getQuizAttempts } from '../features/articles/articleApi';
 import { StatusBadge } from '../components/ui';
 import api from '../api/axiosInstance';
 
@@ -29,6 +31,10 @@ function Profile() {
   const [passwordError, setPasswordError] = useState('');
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [myMissions, setMyMissions] = useState({ led: [], joined: [], completed: [], stats: { actionItemsDone: 0, missionsParticipated: 0 } });
+  const [missionsLoading, setMissionsLoading] = useState(false);
+  const [quizAttempts, setQuizAttempts] = useState([]);
+  const [quizAttemptsLoading, setQuizAttemptsLoading] = useState(false);
 
   const fileInputRef = useRef(null);
   const dispatch = useDispatch();
@@ -41,7 +47,33 @@ function Profile() {
       return;
     }
     loadProfile();
+    loadMyMissions();
+    loadQuizAttempts();
   }, [isAuthenticated]);
+
+  const loadMyMissions = async () => {
+    try {
+      setMissionsLoading(true);
+      const result = await getMyMissions();
+      setMyMissions(result.data || { led: [], joined: [], completed: [], stats: { actionItemsDone: 0, missionsParticipated: 0 } });
+    } catch (err) {
+      console.error('Failed to load my missions', err);
+    } finally {
+      setMissionsLoading(false);
+    }
+  };
+
+  const loadQuizAttempts = async () => {
+    try {
+      setQuizAttemptsLoading(true);
+      const result = await getQuizAttempts();
+      setQuizAttempts(result.data || []);
+    } catch (err) {
+      console.error('Failed to load quiz attempts', err);
+    } finally {
+      setQuizAttemptsLoading(false);
+    }
+  };
 
   const loadProfile = async () => {
     try {
@@ -388,6 +420,114 @@ function Profile() {
                 </button>
               </div>
             </form>
+          </div>
+
+          <hr className="my-10 border-canopy-mist-200" />
+
+          <div>
+            <h2 className="text-xl font-display font-semibold text-canopy-forest-950 mb-4">My Missions</h2>
+
+            {missionsLoading ? (
+              <p className="text-canopy-ink-900/60">Loading missions...</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                <div className="p-4 bg-canopy-sand-50 rounded-xl">
+                  <p className="text-2xl font-display font-semibold text-canopy-forest-950">{myMissions.led?.length || 0}</p>
+                  <p className="text-sm text-canopy-ink-900/70">Leading</p>
+                </div>
+                <div className="p-4 bg-canopy-sand-50 rounded-xl">
+                  <p className="text-2xl font-display font-semibold text-canopy-forest-950">{myMissions.joined?.length || 0}</p>
+                  <p className="text-sm text-canopy-ink-900/70">Joined</p>
+                </div>
+                <div className="p-4 bg-canopy-sand-50 rounded-xl">
+                  <p className="text-2xl font-display font-semibold text-canopy-forest-950">{myMissions.completed?.length || 0}</p>
+                  <p className="text-sm text-canopy-ink-900/70">Completed</p>
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {(myMissions.led || []).length === 0 && (myMissions.joined || []).length === 0 && (myMissions.completed || []).length === 0 ? (
+                <p className="text-canopy-ink-900/60 text-center py-4">You haven't joined any missions yet.</p>
+              ) : (
+                <>
+                  {(myMissions.led || []).map((mission) => (
+                    <div key={mission._id} className="flex items-center justify-between p-4 bg-canopy-sand-50 rounded-xl">
+                      <div>
+                        <p className="font-medium text-canopy-forest-950">{mission.title}</p>
+                        <p className="text-xs text-canopy-ink-900/50">Leading</p>
+                      </div>
+                      <button onClick={() => navigate(`/missions/${mission._id}`)} className="text-sm text-canopy-forest-600 hover:underline">
+                        View
+                      </button>
+                    </div>
+                  ))}
+                  {(myMissions.joined || []).map((mission) => (
+                    <div key={mission._id} className="flex items-center justify-between p-4 bg-canopy-sand-50 rounded-xl">
+                      <div>
+                        <p className="font-medium text-canopy-forest-950">{mission.title}</p>
+                        <p className="text-xs text-canopy-ink-900/50">Member</p>
+                      </div>
+                      <button onClick={() => navigate(`/missions/${mission._id}`)} className="text-sm text-canopy-forest-600 hover:underline">
+                        View
+                      </button>
+                    </div>
+                  ))}
+                  {(myMissions.completed || []).map((mission) => (
+                    <div key={mission._id} className="flex items-center justify-between p-4 bg-canopy-sand-50 rounded-xl">
+                      <div>
+                        <p className="font-medium text-canopy-forest-950">{mission.title}</p>
+                        <p className="text-xs text-canopy-ink-900/50">Completed</p>
+                      </div>
+                      <button onClick={() => navigate(`/missions/${mission._id}`)} className="text-sm text-canopy-forest-600 hover:underline">
+                        View
+                      </button>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          </div>
+
+          <hr className="my-10 border-canopy-mist-200" />
+
+          <div>
+            <h2 className="text-xl font-display font-semibold text-canopy-forest-950 mb-4">My Learning</h2>
+
+            {quizAttemptsLoading ? (
+              <p className="text-canopy-ink-900/60">Loading quiz attempts...</p>
+            ) : quizAttempts.length === 0 ? (
+              <p className="text-canopy-ink-900/60 text-center py-4">You haven't taken any quizzes yet.</p>
+            ) : (
+              <div className="space-y-3">
+                {quizAttempts.map((attempt) => (
+                  <div key={attempt._id} className="flex items-center justify-between p-4 bg-canopy-sand-50 rounded-xl">
+                    <div>
+                      <p className="font-medium text-canopy-forest-950">
+                        {attempt.quiz?.article?.title || 'Unknown Article'}
+                      </p>
+                      <p className="text-xs text-canopy-ink-900/50">
+                        Score: {attempt.score}/{attempt.totalQuestions} ({attempt.scorePercent}%)
+                        {attempt.passed !== null && (
+                          <span className={`ml-2 ${attempt.passed ? 'text-green-600' : 'text-red-600'}`}>
+                            {attempt.passed ? 'Passed' : 'Not passed'}
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-xs text-canopy-ink-900/50">
+                        {new Date(attempt.submittedAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => navigate(`/articles/${attempt.quiz?.article?.slug}`)}
+                      className="text-sm text-canopy-forest-600 hover:underline"
+                    >
+                      View Article
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

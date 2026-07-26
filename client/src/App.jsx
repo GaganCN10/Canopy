@@ -25,6 +25,13 @@ import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ToastProvider } from './components/Toast';
 
+import Missions from './pages/Missions';
+import MissionDetail from './pages/MissionDetail';
+import CreateMission from './pages/CreateMission';
+import Articles from './pages/Articles';
+import ArticleDetail from './pages/ArticleDetail';
+import CreateArticle from './pages/CreateArticle';
+
 function App() {
   return (
     <ErrorBoundary>
@@ -48,6 +55,20 @@ function App() {
               <Route path="rescue/new" element={<CreateRescueCase />} />
               <Route path="rescue/:id" element={<RescueCaseDetail />} />
               <Route path="analytics" element={<AnalyticsDashboard />} />
+              <Route path="missions" element={<Missions />} />
+              <Route path="missions/create" element={
+                <ProtectedRoute allowedRoles={['citizen', 'ranger', 'researcher', 'rescue', 'admin']}>
+                  <CreateMission />
+                </ProtectedRoute>
+              } />
+              <Route path="missions/:id" element={<MissionDetail />} />
+              <Route path="articles" element={<Articles />} />
+              <Route path="articles/:slug" element={<ArticleDetail />} />
+              <Route path="articles/create" element={
+                <ProtectedRoute allowedRoles={['researcher', 'ranger', 'admin']}>
+                  <CreateArticle />
+                </ProtectedRoute>
+              } />
               <Route
                 path="profile"
                 element={

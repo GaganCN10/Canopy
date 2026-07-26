@@ -48,7 +48,7 @@ const validatePasswordStrength = (password) => {
   }
 };
 
-export const register = async ({ email, password, firstName, lastName, role, phone, organization }) => {
+export const register = async ({ email, password, firstName, lastName, phone, organization }) => {
   const existingUser = await User.findOne({ email });
   if (existingUser) {
     const error = new Error('User already exists with this email');
@@ -64,7 +64,7 @@ export const register = async ({ email, password, firstName, lastName, role, pho
     password,
     firstName,
     lastName,
-    role: role || 'public',
+    role: 'citizen',
     phone,
     organization,
   });

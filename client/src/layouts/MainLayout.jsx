@@ -8,7 +8,9 @@ import { getNotifications, markAllNotificationsAsRead } from '../features/notifi
 const PRIMARY_NAV = [
   { label: 'Home', href: '/' },
   { label: 'Species', href: '/species' },
+  { label: 'Articles', href: '/articles' },
   { label: 'Map', href: '/map' },
+  { label: 'Missions', href: '/missions' },
   { label: 'Analytics', href: '/analytics' },
 ];
 

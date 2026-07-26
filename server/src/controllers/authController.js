@@ -19,9 +19,9 @@ export const registerUser = async (req, res, next) => {
       return sendError(res, 400, 'Validation failed', errors.array());
     }
 
-    const { email, password, firstName, lastName, role, phone, organization } = req.body;
+    const { email, password, firstName, lastName, phone, organization } = req.body;
 
-    const result = await register({ email, password, firstName, lastName, role, phone, organization });
+    const result = await register({ email, password, firstName, lastName, phone, organization });
 
     sendSuccess(res, 201, 'User registered successfully', result);
   } catch (error) {

@@ -9,6 +9,8 @@ import rescueRoutes from './rescueRoutes.js';
 import analyticsRoutes from './analyticsRoutes.js';
 import notificationRoutes from './notificationRoutes.js';
 import uploadRoutes from './uploadRoutes.js';
+import missionRoutes from './missionRoutes.js';
+import articleRoutes from './articleRoutes.js';
 
 export default function mountRoutes(app) {
   app.use('/api/auth', authRoutes);
@@ -21,4 +23,6 @@ export default function mountRoutes(app) {
   app.use('/api/notifications', notificationRoutes);
   app.use('/api/analytics', analyticsRoutes);
   app.use('/api/upload', uploadRoutes);
+  app.use('/api/missions', missionRoutes);
+  app.use('/api/articles', articleRoutes);
 }

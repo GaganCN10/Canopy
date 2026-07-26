@@ -39,6 +39,8 @@ Build a single, unified web platform that consolidates the core software-solvabl
 - Admin Panel (moderation, user management, content management)
 - Analytics Dashboards
 - Movement/Corridor Visualization (via imported/open GPS telemetry data)
+- Conservation Missions & Volunteer Collaboration (mission creation, threads, task boards, membership management)
+- Conservation Articles & Learning Modules (authored articles, optional quizzes with scored results)
 
 ### 2.2 In Scope (AI/ML Modules — Feasibility-Verified, see Section 3)
 - Species Image Identification
@@ -203,6 +205,10 @@ conserveos/
 | **Rescue Center Staff** | Manage rescue/rehab case records for their center |
 | **Admin** | Full access: user management, content moderation, species catalog management, system configuration |
 
+> **Footnote:** In addition to the global roles above, Missions introduce a per-Mission-scoped role layer (Mission Lead, Co-Lead, Member) layered on top of any global role. See Section 12.3 for details.
+
+> **Footnote:** Article authoring is gated to Researcher/NGO, Ranger/Field Staff, and Admin roles; reading articles and taking quizzes is open to all visitors. See Section 13.3 for details.
+
 ---
 
 ## 7. Functional Requirements by Module
@@ -220,6 +226,8 @@ conserveos/
 9. **Admin Panel** — User management (role assignment, ban/unban), moderation queues (sightings, tips), species catalog management, geofence zone management.
 10. **Analytics Dashboard** — Aggregated charts: sightings over time, species distribution, regional activity, verification stats.
 11. **ML-Backed Modules** — Per Section 3, integrated in later phases as described.
+12. **Conservation Missions Module** — Mission creation, discovery/join, per-Mission threads, task boards, membership management, and profile integration. See Section 12 for full detail.
+13. **Conservation Articles & Learning Modules** — Authored articles, optional quizzes with scored results, and attempt history. See Section 13 for full detail.
 
 ---
 
@@ -349,85 +357,114 @@ conserveos/
 - Recharts-based dashboard UI consuming these endpoints.
 - **DoD:** Dashboard renders real aggregated charts from live database data (not placeholder numbers).
 
-### PHASE 18 — ML-Service Bootstrap & Node↔Python Contract
+### PHASE 17.5 — Articles & Quizzes (Backend)
+- `Article`, `Quiz`, `QuizQuestion`, `QuizAttempt` Mongoose schemas per Section 13.5.
+- CRUD endpoints for articles (draft/publish workflow), nested quiz/question management, attempt submission with server-side scoring and answer-stripping on the read endpoint.
+- Rich text sanitization pipeline.
+- **DoD:** An author can create, save as draft, and publish an article via API; a reader can fetch it, submit quiz answers, and receive a scored result — correct answers are verifiably absent from the pre-submission payload (checked via test).
+
+### PHASE 17.6 — Articles & Quizzes (Frontend)
+- Articles listing + reader pages, Article Editor with embedded Quiz Builder, Quiz-taking component, Results component, "My Learning" tab on Profile.
+- **DoD:** An authorized user can write an article with a 3-question quiz through the UI, publish it, and a separate logged-in user can read it, take the quiz, and see a real results breakdown end-to-end.
+
+### PHASE 18 — Conservation Missions (Backend)
+- `Mission`, `MissionMembership`, `MissionThreadPost`, `MissionActionItem` Mongoose schemas per Section 12.5.
+- CRUD + join/approve/leave endpoints, `missionRoleGuard` middleware, `missionService.js` business logic layer.
+- **DoD:** A user can create a Mission via API, a second user can join it (open type) or request-and-be-approved (request type), verified via automated tests.
+
+### PHASE 19 — Conservation Missions (Frontend — Discovery & Detail)
+- Missions Discovery page (filters, map view for on-site Missions), Create/Edit Mission form, Mission Detail page shell with tabs.
+- **DoD:** A user can create a Mission through the UI, see it in the discovery feed, and another user can find and join it.
+
+### PHASE 20 — Mission Thread & Task Board
+- Thread posting UI (with @mentions, pinned Updates) wired to Socket.IO for real-time updates.
+- Task Board UI (claim/assign/status transitions).
+- **DoD:** Two logged-in members of the same Mission can post in the thread in real time and collaboratively move a task from Open → Done.
+
+### PHASE 21 — Mission Membership, Lifecycle & Profile Integration
+- Member management UI (approve requests, promote Co-Lead, remove member), Mission status transitions, "My Missions" tabs on Profile page.
+- Notification triggers wired into existing Notification module (join request, approval, @mention, task assigned, status change).
+- **DoD:** Full Mission lifecycle — create → join → collaborate → mark complete — is demonstrable end-to-end through the UI with real notifications firing at each step.
+
+### PHASE 22 — ML-Service Bootstrap & Node↔Python Contract
 - FastAPI service skeleton finalized: health-check route, standardized request/response schema (Pydantic) shared pattern for all future ML endpoints.
 - Node.js `mlService` client module (Axios wrapper) in `server/src/services/`.
-- Finalize the target regional species list for Phase 19 (developer + product owner decision, documented in `docs/`).
+- Finalize the target regional species list for Phase 23 (developer + product owner decision, documented in `docs/`).
 - **DoD:** Server can call `ml-service`'s health-check endpoint and receive a valid response; contract pattern documented in `docs/`.
 
-### PHASE 19 — ML Feature: Species Image Identification
+### PHASE 23 — ML Feature: Species Image Identification
 - Acquire/prepare dataset (iNaturalist/GBIF subset for the finalized species list).
 - Train/fine-tune classifier (MobileNetV2/EfficientNet transfer learning) — training scripts live in `ml-service/training/`, not runtime code.
 - Build FastAPI inference endpoint (`/predict/species-image`).
 - Integrate into sighting creation flow: uploaded photo → server calls ml-service → suggested species pre-fills the sighting form (user can confirm/override).
 - **DoD:** Uploading a real photo of a species from the trained list returns a genuine model prediction with confidence score, surfaced in the UI.
 
-### PHASE 20 — ML Feature: Camera-Trap Batch Triage
+### PHASE 24 — ML Feature: Camera-Trap Batch Triage
 - Integrate MegaDetector (pretrained weights) into ml-service.
-- New endpoint: batch image upload → per-image classification (animal/person/vehicle/blank) → for "animal" results, chain into Phase 19's species classifier.
+- New endpoint: batch image upload → per-image classification (animal/person/vehicle/blank) → for "animal" results, chain into Phase 23's species classifier.
 - Frontend: "Camera Trap Upload" page (bulk upload, results table with thumbnails + tags, filter out blanks).
 - **DoD:** A folder of real camera-trap-style images, when bulk-uploaded, is correctly triaged with blanks filtered and animals tagged.
 
-### PHASE 21 — ML Feature: Bioacoustic Species ID
+### PHASE 25 — ML Feature: Bioacoustic Species ID
 - Integrate BirdNET-style pretrained model/embeddings into ml-service.
 - Endpoint: audio upload → species prediction with confidence + timestamp segments.
 - Frontend: audio upload UI (file upload; browser mic recording optional stretch), results display.
 - **DoD:** A real bird call audio clip returns a genuine species prediction.
 
-### PHASE 22 — ML Feature: Acoustic Threat Detection
+### PHASE 26 — ML Feature: Acoustic Threat Detection
 - Fine-tune YAMNet-embedding classifier on AudioSet/ESC-50/UrbanSound8K subset for gunshot/chainsaw categories.
 - Endpoint: audio clip → threat probability + category.
 - Frontend: "Report Threat Sound" upload flow; high-confidence detections auto-create a flagged entry in the Anti-Poaching review queue (Phase 12/13).
 - **DoD:** A real gunshot/chainsaw sample clip is correctly flagged; a real birdsong/ambient clip is correctly not flagged.
 
-### PHASE 23 — ML Feature: Satellite Habitat/NDVI Monitoring
+### PHASE 27 — ML Feature: Satellite Habitat/NDVI Monitoring
 - Integrate Sentinel Hub (or Google Earth Engine) API in ml-service for NDVI computation over a user-selected bounding box + date range.
 - Endpoint: region + date range → NDVI raster/summary + change-over-time value.
 - Frontend: Habitat Monitoring page — draw/select region on map, view NDVI overlay and trend chart.
 - **DoD:** Selecting a real region returns real, currently-computed NDVI data from actual satellite imagery (not a static image).
 
-### PHASE 24 — ML Feature: Predictive Poaching Hotspot Mapping
+### PHASE 28 — ML Feature: Predictive Poaching Hotspot Mapping
 - Backend/ml-service: KDE computation over real anti-poaching tip + verified sighting location data.
 - Endpoint: region → hotspot heatmap data (GeoJSON).
 - Frontend: Heatmap layer on the map (role-gated to Ranger/Admin/Researcher).
 - **DoD:** As real tip/sighting data accumulates in the dev database, the heatmap output visibly reflects it.
 
-### PHASE 25 — ML Feature: Population Trend Forecasting
+### PHASE 29 — ML Feature: Population Trend Forecasting
 - Prophet/ARIMA model run on real per-species sighting counts over time (ml-service endpoint, on-demand computation — no persistent training required per request).
 - Frontend: forecast chart on species detail page / analytics dashboard.
 - **DoD:** Given real historical sighting data in the dev DB, the endpoint returns a genuine forecast with confidence interval.
 
-### PHASE 26 — ML Feature: Anomaly Detection
+### PHASE 30 — ML Feature: Anomaly Detection
 - Isolation Forest / rolling z-score computation on sighting frequency data per species/region.
 - Endpoint + admin dashboard alert card: "Unusual drop/spike detected for [species] in [region]."
 - **DoD:** Seeding the dev DB with an artificially sparse period for a species (real data, just a deliberate test scenario — not mocked output) triggers a genuine anomaly flag.
 
-### PHASE 27 — ML Feature: Movement/Corridor Visualization
+### PHASE 31 — ML Feature: Movement/Corridor Visualization
 - Movebank public API integration (real open GPS telemetry datasets) + CSV/GPX manual import option.
 - Endpoint: parse/normalize telemetry → GeoJSON trajectory.
 - Frontend: Corridor map layer showing real movement paths, filterable by species/dataset.
 - **DoD:** A real Movebank dataset or uploaded GPX file renders as an actual animated/static trajectory on the map.
 
-### PHASE 28 — ML Feature: Illegal Wildlife Trade Text Scanner
+### PHASE 32 — ML Feature: Illegal Wildlife Trade Text Scanner
 - Confirm and document (in `docs/`) the specific, ToS-permissive public sources to scan, per the legal caveat in Section 3.9.
 - NLP classifier (spaCy/transformer-based) for trafficking-indicative text.
 - Admin-only review queue UI (flagged listing → approve/dismiss, never auto-action).
 - **DoD:** Scanning the approved source list produces real flagged results in the review queue; no autonomous action is taken on any flag.
 
-### PHASE 29 — Cross-Module Integration Pass
+### PHASE 33 — Cross-Module Integration Pass
 - Wire all ML results into their respective UI surfaces consistently (loading states, error states, confidence display conventions).
 - Ensure RBAC is correctly enforced across every new ML-backed route.
 - Full click-through regression pass across all modules.
 - **DoD:** A single test user journey (register → report sighting with real species ID → verify → view on map → check dashboard → admin reviews tip) works with zero broken links or console errors.
 
-### PHASE 30 — Testing & QA Hardening
+### PHASE 34 — Testing & QA Hardening
 - Backend: Jest/Supertest coverage for all controllers/services.
 - ml-service: Pytest coverage for all inference endpoints (using real sample inputs).
 - Frontend: React Testing Library coverage for critical flows (auth, sighting submission, admin actions).
 - Manual QA checklist execution across all roles.
 - **DoD:** Test suites pass in all three services; documented QA checklist signed off.
 
-### PHASE 31 — Documentation & Developer Handover
+### PHASE 35 — Documentation & Developer Handover
 - Root `README.md`: setup instructions for all three services (env vars, run commands, model weight download scripts).
 - `docs/architecture.md`: final architecture diagram + data flow.
 - `docs/api-reference.md`: full endpoint documentation (all three services).
@@ -461,6 +498,315 @@ conserveos/
 5. Do not build any mobile-specific code (React Native, PWA manifest/service worker) in this phase.
 6. Keep all business logic out of route/controller files — controllers call services, services contain logic.
 7. Every completed phase must be demonstrated (screenshot/recording or live walkthrough) against its Definition of Done before moving on.
+
+---
+
+## 12. Conservation Missions & Volunteer Collaboration Module
+
+> **Insertion point:** Added as a new Section 12 after Section 11 — Explicit Instructions to Developer. This module introduces **no new hardware, no mocked data, and no ML dependency** — it is standard CRUD + real-time social functionality, fully consistent with the PRD's ground rules in Section 1.
+
+### 12.1 Purpose
+
+Beyond individual sighting reports and tips, conservation needs **organized, collective action**. This module lets any registered user propose a **Mission** — a defined conservation goal (e.g., "Map invasive species in Cubbon Park," "Weekly beach cleanup — Kochi," "Translate species ID guide to Kannada," "Remote data-tagging sprint for camera-trap backlog") — and have other volunteers discover it, join it, and coordinate the work together, regardless of whether the work is done on-site or remotely.
+
+The person who creates a Mission becomes its **Mission Lead** and gets scoped moderation/organizing rights over that Mission only — this is **not** a global elevation to platform Admin. The feature is essentially a lightweight **group + thread + task board**, purpose-built for conservation action rather than being a generic forum.
+
+### 12.2 Core Concepts
+
+| Concept | Definition |
+|---|---|
+| **Mission** | A time-bound or ongoing conservation initiative with a title, description, goal/topic, location type (remote / on-site / hybrid), and status. |
+| **Mission Lead** | The creator (or a promoted co-lead) of a Mission. Can edit the Mission, manage membership, moderate its thread, create/assign action items, and mark the Mission complete. |
+| **Mission Member** | Anyone who has joined a Mission. Can post in the thread, comment, pick up/complete action items, and see all Mission content. |
+| **Mission Thread** | A discussion feed scoped to one Mission — where members plan, coordinate, and share updates. Not a platform-wide forum; each Mission has exactly one thread. |
+| **Action Item (Task)** | A discrete unit of work within a Mission (e.g., "Draft the volunteer sign-up sheet," "Survey 200m stretch near the bridge," "Tag 50 camera-trap images"). Can be claimed by a member, marked in-progress/done. |
+| **Mission Update** | A lightweight progress post by the Mission Lead (or any member, if allowed) — distinct from ordinary thread chatter, pinned/highlighted for visibility (e.g., "12 volunteers joined, first cleanup done, 40kg waste collected"). |
+
+### 12.3 Role Model — Addendum to Section 6
+
+This does **not** add a new row to the global RBAC role table. Instead, it introduces a **Mission-scoped role**, layered on top of any existing global role (Public/Visitor cannot create or join — must be at least **Citizen/Volunteer**; all higher roles inherit these permissions).
+
+| Mission-Scoped Role | Granted By | Permissions (within that Mission only) |
+|---|---|---|
+| **Mission Lead** | Automatically to the creator; can be delegated to a **Co-Lead** | Edit Mission details, approve/deny join requests (if Mission is invite-approval type), remove members, create/assign/close Action Items, pin Mission Updates, close/archive the Mission |
+| **Mission Member** | Self-service join (open Missions) or Lead-approval (approval-gated Missions) | Post in thread, comment, claim/complete unassigned Action Items, leave the Mission |
+| **Platform Admin** (existing global role) | N/A — inherited | Can moderate/remove any Mission or thread content platform-wide, same as existing moderation powers in Section 7.9 |
+
+A single user can be the Mission Lead of many Missions and a Member of many others simultaneously — this is a many-to-many relationship, not a fixed title.
+
+### 12.4 Functional Requirements
+
+1. **Create a Mission** — Any Citizen/Volunteer+ role can create a Mission: title, description, topic/category (e.g., cleanup, monitoring, awareness/education, data-tagging, rescue-support, advocacy), location type (`remote` / `on-site` / `hybrid`), optional geo-location + address (only required for on-site/hybrid), optional target date or "ongoing," optional member cap, join type (`open` = anyone can join instantly, `request` = Lead must approve).
+2. **Discover Missions** — Public-facing browse/search page: filter by topic, location type, status (planning / active / completed), proximity (for on-site Missions, using the existing map/geo infrastructure from Section 4/7.4), and "remote-friendly" toggle so users anywhere can find missions they can help with online.
+3. **Join a Mission** — One-click join (open type) or "Request to Join" with an optional short message (approval type). Lead sees pending requests in a small queue on the Mission page.
+4. **Mission Thread** — Chronological (or threaded-reply) discussion feed scoped to the Mission. Supports text posts, image attachments, and @mentions of other members. Real-time via the existing Socket.IO layer (Section 4.2/8).
+5. **Action Items / Task Board** — Simple Kanban-style board per Mission: **Open → In Progress → Done**. Any member can create an item (or Lead-only, per Mission setting), claim an unassigned item, mark progress, and mark done. Each item supports a short description and optional due date.
+6. **Mission Updates** — A distinct, pinned post type for milestone/progress announcements, shown at the top of the thread and surfaced on the Mission's card in the discovery feed (e.g., "Mission 40% complete").
+7. **Membership Management** — Lead can view member list, promote a member to Co-Lead, remove a member, approve/deny join requests.
+8. **Mission Lifecycle** — Status transitions: `planning → active → completed` (or `archived`/`cancelled`). Only the Lead (or Admin) can transition status. Completed Missions become read-only but remain visible for record-keeping/impact history.
+9. **Notifications** — Reuse the existing Notification module (Section 7.8): new join request, join approved, new thread post/@mention, new Action Item assigned, Mission Update posted, Mission status changed. In-app (Socket.IO) always; email optional per user notification preference.
+10. **Profile Integration** — A user's profile (Section 7.6) shows Missions they lead and Missions they've joined, plus a simple contribution count (Action Items completed, Missions participated in) — real counts derived from actual platform data, not a gamified/mocked score.
+11. **Moderation** — Platform Admin can remove any Mission, thread post, or Action Item that violates content policy, independent of the Mission Lead.
+
+### 12.5 Data Model (MongoDB / Mongoose — consistent with Section 5 stack)
+
+```
+Mission
+  _id
+  title, description, topic (enum), 
+  locationType: enum [remote, onsite, hybrid]
+  location: GeoJSON Point (optional, required if onsite/hybrid), address (string, optional)
+  joinType: enum [open, request]
+  memberCap: number | null
+  status: enum [planning, active, completed, archived, cancelled]
+  createdBy: ObjectId → User (initial Mission Lead)
+  coLeads: [ObjectId → User]
+  targetDate: date | null   // null = ongoing
+  createdAt, updatedAt
+
+MissionMembership
+  _id
+  mission: ObjectId → Mission
+  user: ObjectId → User
+  role: enum [lead, co-lead, member]
+  status: enum [pending, approved, removed]
+  joinedAt
+
+MissionThreadPost
+  _id
+  mission: ObjectId → Mission
+  author: ObjectId → User
+  type: enum [post, update]      // 'update' = pinned Mission Update
+  content: text
+  attachments: [file refs — GridFS, per existing media pattern]
+  parentPost: ObjectId | null    // for threaded replies
+  createdAt
+
+MissionActionItem
+  _id
+  mission: ObjectId → Mission
+  title, description
+  status: enum [open, in_progress, done]
+  assignedTo: ObjectId → User | null
+  dueDate: date | null
+  createdBy: ObjectId → User
+  createdAt, updatedAt
+```
+
+Indexes: `location` (2dsphere, sparse — only set for onsite/hybrid), `mission+status` compound index on MissionActionItem, `mission+user` unique compound index on MissionMembership.
+
+### 12.6 API Endpoints (Server — Express, under `/api/missions`)
+
+| Method | Route | Access |
+|---|---|---|
+| POST | `/missions` | Citizen/Volunteer+ |
+| GET | `/missions` | Public (filters: topic, locationType, status, near) |
+| GET | `/missions/:id` | Public |
+| PATCH | `/missions/:id` | Mission Lead / Admin |
+| POST | `/missions/:id/join` | Citizen/Volunteer+ |
+| POST | `/missions/:id/join-requests/:userId/approve` | Mission Lead |
+| DELETE | `/missions/:id/members/:userId` | Mission Lead / Admin |
+| POST | `/missions/:id/co-leads/:userId` | Mission Lead |
+| GET | `/missions/:id/thread` | Mission Members |
+| POST | `/missions/:id/thread` | Mission Members |
+| GET | `/missions/:id/tasks` | Mission Members |
+| POST | `/missions/:id/tasks` | Mission Members (or Lead-only, per Mission setting) |
+| PATCH | `/missions/:id/tasks/:taskId` | Assignee / Lead / Admin |
+| PATCH | `/missions/:id/status` | Mission Lead / Admin |
+
+All routes pass through the existing `authMiddleware` / `roleGuard` pattern (Section 4/Phase 2); Mission-scoped authorization (is this user the Lead/Co-Lead/Member of *this* Mission) is handled by a new `missionRoleGuard` middleware — kept in `middlewares/`, business logic in `services/missionService.js`, per the existing layering rule (Section 1.5 / 8).
+
+### 12.7 Frontend (Client — feature-sliced, under `features/missions/`)
+
+- **Missions Discovery Page** — Card grid/list, filters (topic, remote-friendly toggle, status, map view for on-site Missions using existing Leaflet setup), search.
+- **Mission Detail Page** — Header (title, status, location type, Lead/Co-Leads, member count, join button/request), tabs: **Thread**, **Tasks**, **Members**, **About**.
+- **Create/Edit Mission Form** — Guided form for the fields in 12.5.
+- **Task Board Component** — Simple 3-column board (Open / In Progress / Done), reusable card component, claim/assign action.
+- **Thread Component** — Reuses existing comment/feed UI patterns from Sighting verification (Section 7.3) where possible, extended for @mentions and pinned Updates.
+- **My Missions** — Added to user Profile page (Section 7.6/Phase 6): "Leading," "Joined," "Completed" tabs.
+
+### 12.8 Non-Functional Notes
+
+- **No new infra required** — reuses MongoDB, Socket.IO, GridFS, and the existing notification pipeline (Nodemailer/Twilio) already specified in Section 5.
+- **Abuse prevention:** rate-limit Mission creation and thread posting per user (same pattern as Anti-Poaching tip rate limiting, Section 8); Admin retains platform-wide moderation override regardless of Mission Lead status.
+- **Privacy:** exact addresses for on-site Missions follow the same coordinate-generalization option used for sensitive sightings (Section 7.4) if a Mission Lead marks a location as sensitive (e.g., nesting site cleanup).
+- **Accessibility of "remote" work:** the `locationType: remote` and `hybrid` fields are the mechanism that lets anyone, anywhere, discover and contribute to a Mission without a physical presence requirement — no geofencing or location permission is required to join a remote Mission.
+
+### 12.9 Development Phases — Addendum to Section 9
+
+*(Inserted as Phases 18–21 in Section 9, before the ML phases. Subsequent ML phases are renumbered 22–35.)*
+
+#### PHASE 18 — Conservation Missions (Backend)
+- `Mission`, `MissionMembership`, `MissionThreadPost`, `MissionActionItem` Mongoose schemas per Section 12.5.
+- CRUD + join/approve/leave endpoints, `missionRoleGuard` middleware, `missionService.js` business logic layer.
+- **DoD:** A user can create a Mission via API, a second user can join it (open type) or request-and-be-approved (request type), verified via automated tests.
+
+#### PHASE 19 — Conservation Missions (Frontend — Discovery & Detail)
+- Missions Discovery page (filters, map view for on-site Missions), Create/Edit Mission form, Mission Detail page shell with tabs.
+- **DoD:** A user can create a Mission through the UI, see it in the discovery feed, and another user can find and join it.
+
+#### PHASE 20 — Mission Thread & Task Board
+- Thread posting UI (with @mentions, pinned Updates) wired to Socket.IO for real-time updates.
+- Task Board UI (claim/assign/status transitions).
+- **DoD:** Two logged-in members of the same Mission can post in the thread in real time and collaboratively move a task from Open → Done.
+
+#### PHASE 21 — Mission Membership, Lifecycle & Profile Integration
+- Member management UI (approve requests, promote Co-Lead, remove member), Mission status transitions, "My Missions" tabs on Profile page.
+- Notification triggers wired into existing Notification module (join request, approval, @mention, task assigned, status change).
+- **DoD:** Full Mission lifecycle — create → join → collaborate → mark complete — is demonstrable end-to-end through the UI with real notifications firing at each step.
+
+### 12.10 Small Edits to Existing Sections
+
+- **Section 2.1 (In Scope — Software Modules):** add a line — `Conservation Missions & Volunteer Collaboration (mission creation, threads, task boards, membership management)`.
+- **Section 6 (User Roles & Permissions):** add a footnote under the table referencing 12.3 — Mission Lead/Co-Lead/Member are per-Mission scoped roles layered on top of the global role, not new global rows.
+- **Section 7 (Functional Requirements by Module):** add item `12. Conservation Missions Module — see Section 12 for full detail.`
+- **Section 9 (Development Phases):** insert Phases 18–21 as described in 12.9; renumber subsequent ML phases 18–31 → 22–35.
+- **Section 2.1 (In Scope — Software Modules):** add — `Conservation Articles & Learning Modules (authored articles, optional quizzes with scored results)`.
+- **Section 6 (User Roles & Permissions):** add a footnote referencing 13.3 — article authoring is gated to Researcher/NGO, Ranger, and Admin roles; reading is public.
+- **Section 7 (Functional Requirements by Module):** add item `13. Conservation Articles & Learning Modules — see Section 13 for full detail.`
+- **Section 9 (Development Phases):** insert Phases 17.5 and 17.6 as described in 13.9.
+
+---
+
+## 13. Conservation Articles & Learning Modules
+
+> **Insertion point:** Added as a new Section 13 after Section 12 — Conservation Missions. Text-and-quiz only — **no image upload requirement** for this module.
+
+### 13.1 Purpose
+
+Give the platform a home for **structured knowledge**, not just live data — articles that teach core wildlife conservation concepts (species identification basics, habitat types, human-wildlife coexistence, why poaching reporting matters, how citizen science works, invasive species, etc.), each authored by a credited person, and each optionally paired with a short quiz so a reader can check their understanding and see a result at the end. This turns passive reading into a small, self-contained learning module rather than a plain blog.
+
+### 13.2 Core Concepts
+
+| Concept | Definition |
+|---|---|
+| **Article** | A single piece of long-form written content: title, body (rich text), author, topic/category, read time, published/draft status. Text-only — no image fields. |
+| **Author** | The platform user credited for the article. Authoring is restricted to trusted roles (see 13.3) — this is curated content, not open user-generated posts. |
+| **Quiz** | An optional set of questions attached to one Article. If present, it's shown after the article body. |
+| **Quiz Question** | Multiple-choice (single-correct or multi-correct) or True/False question tied to a quiz. |
+| **Quiz Attempt** | A record of one user completing one quiz: their answers, score, and timestamp — shown back to them as a **Results** screen immediately after submission. |
+
+### 13.3 Role Model — Addendum to Section 6
+
+No new global role. Authoring rights are gated on existing roles:
+
+| Action | Allowed Roles |
+|---|---|
+| Read published articles + take quizzes | Public/Visitor and above (no login required to read; login required to save/see quiz result history) |
+| Create/edit/publish an Article | **Researcher/NGO**, **Ranger/Field Staff**, **Admin** (same trusted tier already used for content-quality-sensitive actions elsewhere in the PRD) |
+| Create/edit a Quiz on an Article | Same as above — quiz authoring is bundled with article authoring, not a separate role |
+| Delete/unpublish any Article | **Admin** only |
+
+This keeps article quality high without introducing a brand-new "Editor" role the RBAC table doesn't already anticipate.
+
+### 13.4 Functional Requirements
+
+1. **Browse Articles** — Public listing page: filter by topic/category (e.g., Species ID, Habitats, Human-Wildlife Coexistence, Anti-Poaching, Citizen Science, Ecosystem Basics), sort by newest/most-read, search by title/keyword.
+2. **Read an Article** — Clean reading view: title, author name (linked to a simple author byline, not a full profile requirement), estimated read time, published date, body content rendered from rich text.
+3. **Author/Edit an Article** — Rich text editor (heading levels, bold/italic, lists, links, blockquote) — no image embedding, per requirement. Draft/Published toggle. Only the author or Admin can edit; Admin can unpublish any article.
+4. **Attach a Quiz (optional)** — While authoring, the author can add a quiz: any number of questions, each with 2–6 options and one or more correct answers marked, plus an optional short explanation shown after the reader submits.
+5. **Take the Quiz** — Presented after the article body if one exists. Reader answers all questions, submits once (no changing after submit).
+6. **Results Screen** — Immediately after submission: score (e.g., "7/10 correct"), per-question breakdown (their answer vs. correct answer, plus the author's explanation if provided), and a simple pass/fail or score-band message if the author set a passing threshold. No further gamification (no leaderboard, no badges) — consistent with keeping this educational rather than points-driven.
+7. **Attempt History** — Logged-in users can see their own past quiz attempts and scores on their Profile page (reuse the existing Profile page from Section 7.6/Phase 6) — real record, not a mocked stat.
+8. **Retake Policy** — Configurable per quiz by the author: unlimited retakes (default) or single-attempt only.
+9. **Moderation** — Admin can unpublish/delete any article or quiz, same override pattern used elsewhere (Section 7.9).
+
+### 13.5 Data Model (MongoDB / Mongoose — consistent with Section 5 stack)
+
+```
+Article
+  _id
+  title, slug
+  body: rich text (stored as sanitized HTML or structured JSON, e.g., Tiptap/ProseMirror doc — no image node type registered)
+  topic: enum [species-id, habitats, coexistence, anti-poaching, citizen-science, ecosystems, other]
+  author: ObjectId → User
+  status: enum [draft, published]
+  readTimeMinutes: number (auto-estimated from word count)
+  publishedAt: date | null
+  createdAt, updatedAt
+
+Quiz
+  _id
+  article: ObjectId → Article (one-to-one)
+  passThresholdPercent: number | null   // null = no pass/fail, score-only
+  retakePolicy: enum [unlimited, single-attempt]
+  createdAt, updatedAt
+
+QuizQuestion
+  _id
+  quiz: ObjectId → Quiz
+  questionText: text
+  type: enum [single-choice, multi-choice, true-false]
+  options: [ { id, text } ]
+  correctOptionIds: [id]
+  explanation: text | null
+  order: number
+
+QuizAttempt
+  _id
+  quiz: ObjectId → Quiz
+  user: ObjectId → User
+  answers: [ { questionId, selectedOptionIds } ]
+  score: number, scorePercent: number
+  passed: boolean | null
+  submittedAt: date
+```
+
+Indexes: `Article.slug` unique, `Article.topic + status` compound, `QuizAttempt.quiz + user` compound (to enforce single-attempt retake policy).
+
+### 13.6 API Endpoints (Server — Express, under `/api/articles`)
+
+| Method | Route | Access |
+|---|---|---|
+| GET | `/articles` | Public (filters: topic, search; published only unless caller is author/Admin) |
+| GET | `/articles/:slug` | Public (published only unless caller is author/Admin) |
+| POST | `/articles` | Researcher/NGO, Ranger, Admin |
+| PATCH | `/articles/:id` | Author / Admin |
+| DELETE | `/articles/:id` | Admin |
+| POST | `/articles/:id/quiz` | Author / Admin |
+| PATCH | `/quizzes/:id` | Author / Admin |
+| GET | `/articles/:id/quiz` | Public (question text + options, **without** `correctOptionIds`/`explanation` — stripped server-side before send) |
+| POST | `/quizzes/:id/attempts` | Logged-in user (enforces retake policy) → returns score + full breakdown for the Results screen |
+| GET | `/users/me/quiz-attempts` | Logged-in user (own attempt history) |
+
+Note the deliberate server-side stripping of correct answers on the question-fetch endpoint — answers are only revealed in the attempt-submission response, so the quiz can't be "solved" by reading the network payload before submitting.
+
+### 13.7 Frontend (Client — feature-sliced, under `features/articles/`)
+
+- **Articles Listing Page** — Card grid, topic filter chips, search bar, "X min read" badges.
+- **Article Reader Page** — Clean typography-focused layout (title, author byline, date, read time, body), quiz section rendered below the body if one exists.
+- **Article Editor** (author-only) — Rich text editor (Tiptap or similar, headings/bold/italic/lists/links/blockquote only — no image toolbar button), topic selector, Draft/Publish toggle, embedded Quiz Builder (add/reorder/delete questions, mark correct options, add explanations).
+- **Quiz Component** — Question-by-question or single-scroll form, single submit action, disabled after submit.
+- **Results Component** — Score summary, per-question review with correct/incorrect indicators and explanation text, "Retake" button (if allowed) or "Attempt already used" state.
+- **My Learning** — Added to Profile page: list of past quiz attempts with scores and dates, linked back to the article.
+
+### 13.8 Non-Functional Notes
+
+- **No new infra** — reuses MongoDB and the existing Auth/RBAC middleware pattern; no file storage (GridFS) needed since this module is intentionally text-only.
+- **Content sanitization:** rich text body must be sanitized server-side (e.g., `sanitize-html` or a schema-restricted ProseMirror doc) before storage/render to prevent stored XSS — same discipline as any other user-authored HTML-adjacent content.
+- **Read time estimation:** simple word-count/200wpm calculation on save — real computation, not a placeholder number.
+- **Quiz integrity:** correct answers never sent to the client until after submission (see 13.6); single-attempt enforcement is server-side, not just UI-hidden.
+
+### 13.9 Development Phases — Addendum to Section 9
+
+*(Insert as a standalone pair of phases; no dependency on the Missions module. Can run in parallel with Phases 7–17.)*
+
+#### PHASE 17.5 — Articles & Quizzes (Backend)
+- `Article`, `Quiz`, `QuizQuestion`, `QuizAttempt` Mongoose schemas per Section 13.5.
+- CRUD endpoints for articles (draft/publish workflow), nested quiz/question management, attempt submission with server-side scoring and answer-stripping on the read endpoint.
+- Rich text sanitization pipeline.
+- **DoD:** An author can create, save as draft, and publish an article via API; a reader can fetch it, submit quiz answers, and receive a scored result — correct answers are verifiably absent from the pre-submission payload (checked via test).
+
+#### PHASE 17.6 — Articles & Quizzes (Frontend)
+- Articles listing + reader pages, Article Editor with embedded Quiz Builder, Quiz-taking component, Results component, "My Learning" tab on Profile.
+- **DoD:** An authorized user can write an article with a 3-question quiz through the UI, publish it, and a separate logged-in user can read it, take the quiz, and see a real results breakdown end-to-end.
+
+### 13.10 Small Edits to Existing Sections
+
+- **Section 2.1 (In Scope — Software Modules):** add — `Conservation Articles & Learning Modules (authored articles, optional quizzes with scored results)`.
+- **Section 6 (User Roles & Permissions):** add a footnote referencing 13.3 — article authoring is gated to Researcher/NGO, Ranger, and Admin roles; reading is public.
+- **Section 7 (Functional Requirements by Module):** add item `13. Conservation Articles & Learning Modules — see Section 13 for full detail.`
+- **Section 9 (Development Phases):** insert Phases 17.5 and 17.6 as described in 13.9.
 
 ---
 
