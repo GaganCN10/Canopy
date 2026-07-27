@@ -22,18 +22,15 @@ function RequestRole() {
   const [document, setDocument] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [alreadyElevated, setAlreadyElevated] = useState(false);
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
   const { showSuccess, showError } = useToast();
 
   const elevatedRoles = ['ranger', 'researcher', 'rescue', 'admin'];
+  const currentRole = user?.role;
+  const isRoleChange = currentRole && elevatedRoles.includes(currentRole);
 
-  useEffect(() => {
-    if (user?.role && elevatedRoles.includes(user.role)) {
-      setAlreadyElevated(true);
-    }
-  }, [user?.role]);
+  const availableRoles = REQUESTABLE_ROLES.filter((role) => role.value !== currentRole);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -76,21 +73,6 @@ function RequestRole() {
 
   const selectedRole = REQUESTABLE_ROLES.find((r) => r.value === formData.requestedRole);
 
-  if (alreadyElevated) {
-    return (
-      <div className="min-h-screen py-16 lg:py-24">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="card p-8 lg:p-10 text-center">
-            <Shield className="w-12 h-12 text-canopy-forest-600 mx-auto mb-4" />
-            <h1 className="text-2xl font-display font-semibold text-canopy-forest-950 mb-4">You already have elevated access</h1>
-            <p className="text-canopy-ink-900/70 mb-6">Your account is already assigned the <strong>{user?.role}</strong> role.</p>
-            <button onClick={() => navigate('/profile')} className="btn-primary">Back to Profile</button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen py-16 lg:py-24">
       <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -106,8 +88,14 @@ function RequestRole() {
           <div className="flex items-center gap-3 mb-6">
             <Shield className="w-8 h-8 text-canopy-forest-600" />
             <div>
-              <h1 className="text-3xl font-display font-semibold text-canopy-forest-950">Request a Role</h1>
-              <p className="text-canopy-ink-900/70 mt-1">Request elevation to a trusted role with verified credentials.</p>
+              <h1 className="text-3xl font-display font-semibold text-canopy-forest-950">
+                {isRoleChange ? 'Request Role Change' : 'Request a Role'}
+              </h1>
+              <p className="text-canopy-ink-900/70 mt-1">
+                {isRoleChange
+                  ? 'Request elevation to a different trusted role with verified credentials.'
+                  : 'Request elevation to a trusted role with verified credentials.'}
+              </p>
             </div>
           </div>
 
@@ -121,29 +109,33 @@ function RequestRole() {
             <div>
               <label className="block text-sm font-medium text-canopy-ink-900 mb-3">Select Role</label>
               <div className="space-y-3">
-                {REQUESTABLE_ROLES.map((role) => (
-                  <label
-                    key={role.value}
-                    className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                      formData.requestedRole === role.value
-                        ? 'border-canopy-forest-600 bg-canopy-forest-600/5'
-                        : 'border-canopy-mist-200 hover:border-canopy-forest-600/50'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="requestedRole"
-                      value={role.value}
-                      checked={formData.requestedRole === role.value}
-                      onChange={handleChange}
-                      className="w-4 h-4 text-canopy-forest-600 mt-1"
-                    />
-                    <div>
-                      <p className="font-medium text-canopy-forest-950">{role.label}</p>
-                      <p className="text-sm text-canopy-ink-900/70">{role.description}</p>
-                    </div>
-                  </label>
-                ))}
+                {availableRoles.length > 0 ? (
+                  availableRoles.map((role) => (
+                    <label
+                      key={role.value}
+                      className={`flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                        formData.requestedRole === role.value
+                          ? 'border-canopy-forest-600 bg-canopy-forest-600/5'
+                          : 'border-canopy-mist-200 hover:border-canopy-forest-600/50'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="requestedRole"
+                        value={role.value}
+                        checked={formData.requestedRole === role.value}
+                        onChange={handleChange}
+                        className="w-4 h-4 text-canopy-forest-600 mt-1"
+                      />
+                      <div>
+                        <p className="font-medium text-canopy-forest-950">{role.label}</p>
+                        <p className="text-sm text-canopy-ink-900/70">{role.description}</p>
+                      </div>
+                    </label>
+                  ))
+                ) : (
+                  <p className="text-sm text-canopy-ink-900/70">You have requested all available roles.</p>
+                )}
               </div>
             </div>
 

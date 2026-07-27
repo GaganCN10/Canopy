@@ -12,6 +12,7 @@ import AdminSpecies from './pages/AdminSpecies';
 import Species from './pages/Species';
 import AdminGeofences from './pages/AdminGeofences';
 import AdminRoleRequests from './pages/AdminRoleRequests';
+import ReviewRoleRequest from './pages/ReviewRoleRequest';
 import AdminInviteCodes from './pages/AdminInviteCodes';
 import Sightings from './pages/Sightings';
 import ReportSighting from './pages/ReportSighting';
@@ -45,6 +46,16 @@ function App() {
 
   useEffect(() => {
     dispatch(initializeAuth());
+  }, [dispatch]);
+
+  useEffect(() => {
+    const handleStorage = (e) => {
+      if (e.key === 'accessToken' || e.key === 'refreshToken') {
+        dispatch(initializeAuth());
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
   }, [dispatch]);
 
   if (loading) {
@@ -154,6 +165,14 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
                     <AdminRoleRequests />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="admin/role-requests/:id"
+                element={
+                  <ProtectedRoute>
+                    <ReviewRoleRequest />
                   </ProtectedRoute>
                 }
               />

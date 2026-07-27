@@ -4,6 +4,7 @@ import { motion, useScroll } from 'framer-motion';
 import { Leaf, Menu, X, Bell, User } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { getNotifications, markAllNotificationsAsRead } from '../features/notifications/notificationApi';
+import { StatusBadge } from '../components/ui';
 
 const PRIMARY_NAV = [
   { label: 'Home', href: '/' },
@@ -116,30 +117,33 @@ function MainLayout() {
               </div>
             </div>
 
-            <div className="hidden lg:flex items-center gap-4">
-              {isAuthenticated && (
-                <>
-                  <Link
-                    to="/profile"
-                    className={`flex items-center gap-1 text-sm font-medium transition-colors duration-200 ${
-                      location.pathname === '/profile'
-                        ? 'text-canopy-forest-600'
-                        : 'text-canopy-ink-900/70 hover:text-canopy-forest-600'
-                    }`}
-                  >
-                    <User className="w-4 h-4" />
-                    Profile
-                  </Link>
-                  <Link
-                    to="/sessions"
-                    className={`flex items-center gap-1 text-sm font-medium transition-colors duration-200 ${
-                      location.pathname === '/sessions'
-                        ? 'text-canopy-forest-600'
-                        : 'text-canopy-ink-900/70 hover:text-canopy-forest-600'
-                    }`}
-                  >
-                    Sessions
-                  </Link>
+             <div className="hidden lg:flex items-center gap-4">
+               {isAuthenticated && (
+                 <>
+                   <Link
+                     to="/profile"
+                     className={`flex items-center gap-1 text-sm font-medium transition-colors duration-200 ${
+                       location.pathname === '/profile'
+                         ? 'text-canopy-forest-600'
+                         : 'text-canopy-ink-900/70 hover:text-canopy-forest-600'
+                     }`}
+                   >
+                     <User className="w-4 h-4" />
+                     Profile
+                   </Link>
+                   {user?.role && (
+                     <StatusBadge status={user.role} />
+                   )}
+                   <Link
+                     to="/sessions"
+                     className={`flex items-center gap-1 text-sm font-medium transition-colors duration-200 ${
+                       location.pathname === '/sessions'
+                         ? 'text-canopy-forest-600'
+                         : 'text-canopy-ink-900/70 hover:text-canopy-forest-600'
+                     }`}
+                   >
+                     Sessions
+                   </Link>
                   <div className="relative">
                     <button
                       onClick={() => setNotificationsOpen(!notificationsOpen)}

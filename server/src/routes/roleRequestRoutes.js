@@ -4,9 +4,12 @@ import {
   submitRequest,
   listRequests,
   getMyRequest,
+  getRoleRequestById,
   decideRequest,
   tokenDecide,
   submitProfile,
+  getMyRoleProfile,
+  updateMyRoleProfile,
   createInviteCode,
   listInviteCodes,
   validateInviteCode,
@@ -31,6 +34,8 @@ router.post('/', authMiddleware, strictRateLimit, uploadDocument.single('documen
 
 router.get('/me', authMiddleware, getMyRequest);
 
+router.get('/:id', authMiddleware, getRoleRequestById);
+
 router.get('/', authMiddleware, roleGuard('admin'), validate([
   query('status').optional().isIn(['pending', 'approved', 'rejected']),
   query('requestedRole').optional().isIn(REQUESTABLE_ROLES),
@@ -43,7 +48,7 @@ router.patch('/:id', authMiddleware, roleGuard('admin'), validate([
   body('reason').optional().isLength({ max: 500 }),
 ]), decideRequest);
 
-router.get('/:id/decide', tokenDecide);
+router.get('/:id/decide', authMiddleware, roleGuard('admin'), tokenDecide);
 
 router.get('/:id/document', authMiddleware, serveDocument);
 
@@ -51,6 +56,12 @@ router.post('/role-profiles', authMiddleware, validate([
   body('role').isIn(REQUESTABLE_ROLES),
   body('fields').optional().isObject(),
 ]), submitProfile);
+
+router.get('/role-profiles/me', authMiddleware, getMyRoleProfile);
+
+router.put('/role-profiles/me', authMiddleware, validate([
+  body('fields').optional().isObject(),
+]), updateMyRoleProfile);
 
 router.post('/invite-codes', authMiddleware, roleGuard('admin'), validate([
   body('expiryDays').optional().isInt({ min: 1, max: 365 }),

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import api from '../../api/axiosInstance';
-import { logout } from '../../features/auth/authSlice';
-import { useToast } from '../../components/Toast';
+import api from '../api/axiosInstance';
+import { logout } from '../features/auth/authSlice';
+import { useToast } from '../components/Toast';
 
 function formatDate(date) {
   if (!date) return 'N/A';

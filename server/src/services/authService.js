@@ -4,6 +4,7 @@ import User from '../models/User.js';
 import Session from '../models/Session.js';
 import { config } from '../config/env.js';
 import logger from '../utils/logger.js';
+import { isBlacklisted } from '../middlewares/auth.js';
 
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCK_TIME = 30 * 60 * 1000;

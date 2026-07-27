@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { setCredentials } from './authSlice';
 import { login } from './authApi';
 import { register } from './authApi';
@@ -88,14 +88,17 @@ export default function CanopyAuth() {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { showSuccess, showError } = useToast();
   const { isAuthenticated } = useSelector((state) => state.auth);
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/');
+      const params = new URLSearchParams(location.search);
+      const redirect = params.get('redirect');
+      navigate(redirect || '/');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, location]);
 
   if (isAuthenticated) {
     return null;
@@ -174,7 +177,9 @@ export default function CanopyAuth() {
         mode === "login" ? "Welcome back" : "Account created",
         mode === "login" ? "Redirecting you into the canopy." : "Your conservation journey starts now."
       );
-      navigate('/');
+      const params = new URLSearchParams(location.search);
+      const redirect = params.get('redirect');
+      navigate(redirect || '/');
     } catch (err) {
       const errorInfo = getErrorMessage(err);
       setServerError(errorInfo.message || "Something went wrong. Try again.");

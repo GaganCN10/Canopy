@@ -6,18 +6,22 @@ import {
   createRoleRequest,
   getRoleRequests,
   getMyRoleRequests,
+  getRoleRequest,
   decideRoleRequest,
   submitRoleProfile,
   generateInviteCode,
   getInviteCodes,
   useInviteCode,
+  updateRoleProfile,
 } from '../services/roleRequestService.js';
 import { sendSuccess, sendError } from '../utils/response.js';
 import logger from '../utils/logger.js';
 import { config } from '../config/env.js';
 import User from '../models/User.js';
 import RoleRequest from '../models/RoleRequest.js';
+import RoleProfile from '../models/RoleProfile.js';
 import crypto from 'crypto';
+import { isSuperAdmin } from '../middlewares/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -35,7 +39,7 @@ export const serveDocument = async (req, res, next) => {
       return sendError(res, 404, 'No document found for this request');
     }
 
-    const isAdmin = req.user && req.user.role === 'admin';
+    const isAdmin = req.user && (req.user.role === 'admin' || isSuperAdmin(req.user));
     const isOwner = req.user && roleRequest.user.toString() === req.user._id.toString();
 
     if (!isAdmin && !isOwner) {
@@ -87,6 +91,19 @@ export const getMyRequest = async (req, res, next) => {
     sendSuccess(res, 200, 'Your role requests fetched successfully', requests);
   } catch (error) {
     logger.error('Get my role requests error:', error);
+    next(error);
+  }
+};
+
+export const getRoleRequestById = async (req, res, next) => {
+  try {
+    const roleRequest = await getRoleRequest(req.params.id);
+    if (!roleRequest) {
+      return sendError(res, 404, 'Role request not found');
+    }
+    sendSuccess(res, 200, 'Role request fetched successfully', roleRequest);
+  } catch (error) {
+    logger.error('Get role request error:', error);
     next(error);
   }
 };
@@ -163,6 +180,26 @@ export const submitProfile = async (req, res, next) => {
     sendSuccess(res, 200, 'Role profile submitted successfully', user);
   } catch (error) {
     logger.error('Submit role profile error:', error);
+    next(error);
+  }
+};
+
+export const getMyRoleProfile = async (req, res, next) => {
+  try {
+    const roleProfile = await RoleProfile.findOne({ user: req.user._id }).lean();
+    sendSuccess(res, 200, 'Role profile fetched successfully', roleProfile);
+  } catch (error) {
+    logger.error('Get my role profile error:', error);
+    next(error);
+  }
+};
+
+export const updateMyRoleProfile = async (req, res, next) => {
+  try {
+    const roleProfile = await updateRoleProfile(req.user._id, req.body.fields || {});
+    sendSuccess(res, 200, 'Role profile updated successfully', roleProfile);
+  } catch (error) {
+    logger.error('Update role profile error:', error);
     next(error);
   }
 };

@@ -30,6 +30,11 @@ export const getAllRoleRequests = async (params = {}) => {
   return data;
 };
 
+export const getRoleRequestById = async (id) => {
+  const { data } = await api.get(`/role-requests/${id}`);
+  return data;
+};
+
 export const decideRoleRequest = async (requestId, action, reason = '') => {
   const { data } = await api.patch(`/role-requests/${requestId}`, { action, reason });
   return data;
@@ -44,6 +49,16 @@ export const tokenDecideRoleRequest = async (requestId, token, action) => {
 
 export const submitRoleProfile = async (profileData) => {
   const { data } = await api.post('/role-requests/role-profiles', profileData);
+  return data;
+};
+
+export const getMyRoleProfile = async () => {
+  const { data } = await api.get('/role-requests/role-profiles/me');
+  return data;
+};
+
+export const updateMyRoleProfile = async (fields) => {
+  const { data } = await api.put('/role-requests/role-profiles/me', { fields });
   return data;
 };
 

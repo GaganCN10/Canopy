@@ -45,10 +45,8 @@ export const createRoleRequest = async (userId, requestData, documentFile = null
     throw new Error('User not found');
   }
 
-  const elevatedRoles = ['ranger', 'researcher', 'rescue', 'admin'];
-
-  if (elevatedRoles.includes(user.role)) {
-    throw new Error('Only Citizen/Volunteer users can request role elevation');
+  if (user.role === requestedRole) {
+    throw new Error('You already have this role');
   }
 
   const existingPending = await RoleRequest.findOne({
@@ -82,9 +80,6 @@ export const createRoleRequest = async (userId, requestData, documentFile = null
     }
   }
 
-  const decisionToken = generateDecisionToken(undefined, ADMIN_NOTIFICATION_EMAIL);
-  const decisionTokenHash = hashToken(decisionToken);
-
   const roleRequest = await RoleRequest.create({
     user: userId,
     requestedRole,
@@ -93,7 +88,6 @@ export const createRoleRequest = async (userId, requestData, documentFile = null
     documentFile: documentPath,
     documentOriginalName,
     inviteCode: inviteCode || null,
-    decisionToken: decisionTokenHash,
     decisionTokenExpiresAt: new Date(Date.now() + 72 * 60 * 60 * 1000),
   });
 
@@ -104,10 +98,9 @@ export const createRoleRequest = async (userId, requestData, documentFile = null
     <p><strong>Organization/Department:</strong> ${orgOrDeptName}</p>
     <p><strong>Reason:</strong></p>
     <p>${reason}</p>
-    ${documentPath ? `<p><strong>Document:</strong> <a href="${process.env.BASE_URL || 'http://localhost:5173'}/api/role-requests/${roleRequest._id}/document">View Document</a></p>` : ''}
+    ${documentPath ? `<p><strong>Document:</strong> <a href="${process.env.BASE_URL || 'http://localhost:5173'}/admin/role-requests/${roleRequest._id}">View Request Details</a></p>` : ''}
     <p>
-      <a href="${process.env.BASE_URL || 'http://localhost:5173'}/api/role-requests/${roleRequest._id}/decide?token=${decisionToken}&action=approve">Approve</a> |
-      <a href="${process.env.BASE_URL || 'http://localhost:5173'}/api/role-requests/${roleRequest._id}/decide?token=${decisionToken}&action=reject">Reject</a>
+      <a href="${process.env.BASE_URL || 'http://localhost:5173'}/admin/role-requests/${roleRequest._id}">Review & Decide</a>
     </p>
   `;
 
@@ -115,6 +108,8 @@ export const createRoleRequest = async (userId, requestData, documentFile = null
     to: ADMIN_NOTIFICATION_EMAIL,
     subject: `New Role Request: ${user.firstName} ${user.lastName} → ${requestedRole}`,
     html: adminEmailHtml,
+  }).catch((emailError) => {
+    logger.warn('Email notification failed for role request:', emailError.message);
   });
 
   logger.info(`Role request created: ${roleRequest._id} by user ${userId} for role ${requestedRole}`);
@@ -149,6 +144,14 @@ export const getMyRoleRequests = async (userId) => {
     .sort({ createdAt: -1 })
     .lean();
   return requests;
+};
+
+export const getRoleRequest = async (requestId) => {
+  const request = await RoleRequest.findById(requestId)
+    .populate('user', 'firstName lastName email role')
+    .populate('reviewedBy', 'firstName lastName email')
+    .lean();
+  return request;
 };
 
 export const decideRoleRequest = async (requestId, action, adminUserId, reason = null) => {
@@ -287,4 +290,16 @@ export const useInviteCode = async (userId, code) => {
   await inviteCode.save();
 
   return inviteCode;
+};
+
+export const updateRoleProfile = async (userId, fields) => {
+  const roleProfile = await RoleProfile.findOne({ user: userId });
+  if (!roleProfile) {
+    throw new Error('Role profile not found');
+  }
+
+  roleProfile.fields = { ...roleProfile.fields, ...fields };
+  await roleProfile.save();
+
+  return roleProfile;
 };

@@ -11,6 +11,7 @@ import { sendSuccess, sendError } from '../utils/response.js';
 import logger from '../utils/logger.js';
 import { sendEmail } from '../utils/email.js';
 import { config } from '../config/env.js';
+import RoleProfile from '../models/RoleProfile.js';
 
 export const registerUser = async (req, res, next) => {
   try {
@@ -93,7 +94,10 @@ export const logoutUser = async (req, res, next) => {
 
 export const getProfile = async (req, res, next) => {
   try {
-    sendSuccess(res, 200, 'Profile fetched successfully', req.user);
+    const user = req.user.toObject();
+    const roleProfile = await RoleProfile.findOne({ user: req.user._id }).lean();
+    user.roleProfile = roleProfile || null;
+    sendSuccess(res, 200, 'Profile fetched successfully', user);
   } catch (error) {
     logger.error('Get profile error:', error);
     next(error);
