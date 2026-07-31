@@ -13,6 +13,7 @@ import {
 } from '../services/articleService.js';
 import { sendSuccess, sendError } from '../utils/response.js';
 import logger from '../utils/logger.js';
+import Article from '../models/Article.js';
 
 export const listArticles = async (req, res, next) => {
   try {
@@ -87,7 +88,8 @@ export const remove = async (req, res, next) => {
       return sendError(res, 400, 'Validation failed', errors.array());
     }
 
-    const result = await deleteArticle(req.params.id, req.user._id);
+    const reason = req.body.reason || null;
+    const result = await deleteArticle(req.params.id, req.user._id, reason);
     sendSuccess(res, 200, 'Article deleted successfully', result);
   } catch (error) {
     logger.error('Delete article error:', error);

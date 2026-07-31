@@ -139,15 +139,26 @@ export const updateArticle = async (articleId, userId, updateData) => {
   return article;
 };
 
-export const deleteArticle = async (articleId, userId) => {
+export const deleteArticle = async (articleId, userId, reason = null) => {
   const article = await Article.findById(articleId);
   if (!article) {
     throw new Error('Article not found');
   }
 
   const user = await User.findById(userId);
-  if (!user || user.role !== 'admin') {
-    throw new Error('Only admins can delete articles');
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  const isAdmin = user.role === 'admin';
+  const isAuthor = article.author.toString() === userId.toString();
+
+  if (!isAdmin && !isAuthor) {
+    throw new Error('Only the author or an admin can delete this article');
+  }
+
+  if (isAdmin && !reason) {
+    throw new Error('Admin must provide a reason for deletion');
   }
 
   await Article.findByIdAndDelete(articleId);

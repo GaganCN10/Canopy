@@ -23,9 +23,9 @@ router.post('/', authMiddleware, validate([
 
 router.get('/', authMiddleware, validate([
   query('page').optional().isInt({ min: 1 }),
-  query('limit').optional().isInt({ min: 1, max: 100 }),
-  query('status').optional().isIn(['intake', 'in_care', 'released', 'deceased']),
-  query('center').optional().isString(),
+  query('limit').optional().isInt({ min: 1, max: 1000 }),
+  query('status').optional({ nullable: true }).isString().trim(),
+  query('center').optional({ nullable: true }).isString().trim(),
 ]), listRescueCasesHandler);
 
 router.get('/:id', authMiddleware, validate([

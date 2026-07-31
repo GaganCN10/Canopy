@@ -49,7 +49,14 @@ export const createRescueCaseHandler = async (req, res, next) => {
 export const listRescueCasesHandler = async (req, res, next) => {
   try {
     const { page = 1, limit = 20, status, center } = req.query;
-    const result = await getRescueCases({ page: parseInt(page, 10), limit: parseInt(limit, 10), status, center });
+    const result = await getRescueCases({
+      page: parseInt(page, 10),
+      limit: parseInt(limit, 10),
+      status,
+      center,
+      requesterId: req.user._id,
+      requesterRole: req.user.role,
+    });
     sendSuccess(res, 200, 'Rescue cases fetched successfully', result);
   } catch (error) {
     logger.error('List rescue cases error:', error);
@@ -59,7 +66,7 @@ export const listRescueCasesHandler = async (req, res, next) => {
 
 export const getRescueCaseHandler = async (req, res, next) => {
   try {
-    const rescueCase = await getRescueCaseById(req.params.id);
+    const rescueCase = await getRescueCaseById(req.params.id, req.user._id, req.user.role);
     sendSuccess(res, 200, 'Rescue case fetched successfully', rescueCase);
   } catch (error) {
     logger.error('Get rescue case error:', error);

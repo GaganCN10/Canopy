@@ -21,8 +21,8 @@ router.post('/incidents', authMiddleware, validate([
 
 router.get('/incidents', authMiddleware, validate([
   query('page').optional().isInt({ min: 1 }),
-  query('limit').optional().isInt({ min: 1, max: 100 }),
-  query('type').optional().isIn(['crop_raiding', 'livestock_predation', 'property_damage', 'injury', 'fatal', 'other']),
+  query('limit').optional().isInt({ min: 1, max: 1000 }),
+  query('type').optional({ nullable: true }).isString().trim(),
 ]), listHWCIncidentsHandler);
 
 router.get('/zones', authMiddleware, listGeofenceZonesHandler);

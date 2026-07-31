@@ -20,8 +20,8 @@ export const updateArticle = async (articleId, articleData) => {
   return data;
 };
 
-export const deleteArticle = async (articleId) => {
-  const { data } = await api.delete(`/articles/${articleId}`);
+export const deleteArticle = async (articleId, reason = '') => {
+  const { data } = await api.delete(`/articles/${articleId}`, { data: { reason } });
   return data;
 };
 

@@ -21,12 +21,12 @@ router.post('/', authMiddleware, validate([
 
 router.get('/', validate([
   query('page').optional().isInt({ min: 1 }),
-  query('limit').optional().isInt({ min: 1, max: 100 }),
-  query('species').optional({ nullable: true }).isMongoId(),
-  query('status').optional({ nullable: true }).isIn(['pending', 'verified', 'rejected']),
+  query('limit').optional().isInt({ min: 1, max: 1000 }),
+  query('species').optional({ nullable: true }).isString().trim(),
+  query('status').optional({ nullable: true }).isString().trim(),
   query('startDate').optional({ nullable: true }).isISO8601(),
   query('endDate').optional({ nullable: true }).isISO8601(),
-  query('bbox').optional({ nullable: true }).isString(),
+  query('bbox').optional({ nullable: true }).isString().trim(),
 ]), listSightingsHandler);
 
 router.get('/:id', validate([

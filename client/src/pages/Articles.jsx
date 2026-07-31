@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Plus, BookOpen, Clock } from 'lucide-react';
 import { getArticles } from '../features/articles/articleApi';
 import { useToast } from '../components/Toast';
+import { useSelector } from 'react-redux';
 
 const TOPICS = [
   { value: '', label: 'All Topics' },
@@ -32,6 +33,9 @@ function Articles() {
   });
   const navigate = useNavigate();
   const { showSuccess } = useToast();
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
+
+  const canCreateArticle = isAuthenticated && ['researcher', 'ranger', 'admin'].includes(user?.role);
 
   useEffect(() => {
     loadArticles();
@@ -79,6 +83,15 @@ function Articles() {
               Learn about wildlife conservation through articles and quizzes written by experts and practitioners.
             </p>
           </div>
+          {canCreateArticle && (
+            <button
+              onClick={() => navigate('/articles/create')}
+              className="btn-primary"
+            >
+              <Plus className="w-4 h-4" />
+              Create Article
+            </button>
+          )}
         </div>
 
         <div className="mb-8 space-y-4">

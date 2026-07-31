@@ -6,10 +6,17 @@ export const createRescueCase = async (caseData) => {
   return rescueCase;
 };
 
-export const getRescueCases = async ({ page = 1, limit = 20, status, center } = {}) => {
+export const getRescueCases = async ({ page = 1, limit = 20, status, center, requesterId, requesterRole } = {}) => {
   const query = {};
   if (status) query.status = status;
-  if (center) query.center = center;
+
+  if (requesterRole !== 'admin' && requesterId) {
+    query.rescuer = requesterId;
+  }
+
+  if (center && requesterRole === 'admin') {
+    query.center = center;
+  }
 
   const cases = await RescueCase.find(query)
     .populate('species', 'name scientificName')
@@ -23,13 +30,18 @@ export const getRescueCases = async ({ page = 1, limit = 20, status, center } = 
   return { cases, total, page, limit };
 };
 
-export const getRescueCaseById = async (id) => {
+export const getRescueCaseById = async (id, requesterId, requesterRole) => {
   const rescueCase = await RescueCase.findById(id)
     .populate('species', 'name scientificName')
     .populate('rescuer', 'firstName lastName email');
   if (!rescueCase) {
     throw new Error('Rescue case not found');
   }
+
+  if (requesterRole !== 'admin' && rescueCase.rescuer.toString() !== requesterId.toString()) {
+    throw new Error('You do not have permission to view this rescue case');
+  }
+
   return rescueCase;
 };
 

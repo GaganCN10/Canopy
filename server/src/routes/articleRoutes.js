@@ -21,8 +21,8 @@ const router = express.Router();
 const ARTICLE_TOPICS = ['species-id', 'habitats', 'coexistence', 'anti-poaching', 'citizen-science', 'ecosystems', 'other'];
 
 router.get('/', validate([
-  query('topic').optional().isIn(ARTICLE_TOPICS),
-  query('search').optional().isString(),
+  query('topic').optional().isString().trim().custom((val) => !val || ARTICLE_TOPICS.includes(val)),
+  query('search').optional().isString().trim(),
   query('sort').optional().isIn(['newest', 'most-read']),
 ]), listArticles);
 
@@ -47,8 +47,9 @@ router.patch('/:id', authMiddleware, validate([
   body('slug').optional().isString(),
 ]), update);
 
-router.delete('/:id', authMiddleware, roleGuard('admin'), validate([
+router.delete('/:id', authMiddleware, validate([
   param('id').isMongoId(),
+  body('reason').optional().isString().trim(),
 ]), remove);
 
 router.post('/:id/quiz', authMiddleware, validate([

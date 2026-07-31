@@ -3,6 +3,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { motion, useScroll } from 'framer-motion';
 import { Leaf, Menu, X, Bell, User } from 'lucide-react';
 import { useSelector } from 'react-redux';
+import { io } from 'socket.io-client';
 import { getNotifications, markAllNotificationsAsRead } from '../features/notifications/notificationApi';
 import { StatusBadge } from '../components/ui';
 
@@ -42,6 +43,24 @@ function MainLayout() {
       loadNotifications();
     }
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !user?._id) return;
+    const socket = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000');
+
+    socket.on('connect', () => {
+      socket.emit('join', user._id);
+    });
+
+    socket.on('notification', (notification) => {
+      setNotifications((prev) => [notification, ...prev]);
+      setUnreadCount((prev) => prev + 1);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [isAuthenticated, user?._id]);
 
   const loadNotifications = async () => {
     try {

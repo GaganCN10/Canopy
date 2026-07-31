@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, BookOpen, Clock, User, Send, CheckCircle, XCircle } from 'lucide-react';
-import { getArticle, getQuiz, submitQuizAttempt as submitQuizAttemptApi, getQuizAttempts } from '../features/articles/articleApi';
+import { ArrowLeft, BookOpen, Clock, User, Send, CheckCircle, XCircle, Trash2 } from 'lucide-react';
+import { getArticle, getQuiz, submitQuizAttempt as submitQuizAttemptApi, getQuizAttempts, deleteArticle as deleteArticleApi } from '../features/articles/articleApi';
 import { useToast } from '../components/Toast';
+import { useSelector } from 'react-redux';
 
 const TOPIC_LABELS = {
   'species-id': 'Species ID',
@@ -29,6 +30,15 @@ function ArticleDetail() {
   const [quizResult, setQuizResult] = useState(null);
   const [answers, setAnswers] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteReason, setDeleteReason] = useState('');
+  const [deleting, setDeleting] = useState(false);
+
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
+
+  const canDelete = isAuthenticated && article && (
+    user?.role === 'admin' || article.author?._id === user?._id
+  );
 
   useEffect(() => {
     loadArticle();
@@ -98,6 +108,30 @@ function ArticleDetail() {
     setAnswers({});
   };
 
+  const handleDeleteClick = () => {
+    setDeleteModalOpen(true);
+    setDeleteReason('');
+  };
+
+  const handleConfirmDelete = async () => {
+    if (user?.role === 'admin' && !deleteReason.trim()) {
+      showError('Reason required', 'Admin must provide a reason for deletion');
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      await deleteArticleApi(article._id, deleteReason.trim());
+      showSuccess('Article deleted', 'The article has been deleted successfully');
+      navigate('/articles');
+    } catch (err) {
+      showError('Delete failed', err.response?.data?.message || 'Please try again');
+    } finally {
+      setDeleting(false);
+      setDeleteModalOpen(false);
+    }
+  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -131,6 +165,18 @@ function ArticleDetail() {
           <ArrowLeft className="w-5 h-5" />
           Back to Articles
         </button>
+
+        {canDelete && (
+          <div className="flex justify-end mb-6">
+            <button
+              onClick={handleDeleteClick}
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-red-50 text-red-700 hover:bg-red-100 transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete Article
+            </button>
+          </div>
+        )}
 
         {error && (
           <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700">
@@ -314,6 +360,63 @@ function ArticleDetail() {
           </motion.div>
         )}
       </div>
+
+      <AnimatePresence>
+        {deleteModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl shadow-ambient-lg p-6 max-w-md w-full"
+            >
+              <h3 className="text-xl font-display font-semibold text-canopy-forest-950 mb-2">
+                Delete Article
+              </h3>
+              <p className="text-canopy-ink-900/70 mb-4">
+                Are you sure you want to delete "{article?.title}"? This action cannot be undone.
+              </p>
+
+              {user?.role === 'admin' && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-canopy-ink-900 mb-2">
+                    Reason for deletion <span className="text-red-600">*</span>
+                  </label>
+                  <textarea
+                    value={deleteReason}
+                    onChange={(e) => setDeleteReason(e.target.value)}
+                    placeholder="Please provide a reason for deleting this article..."
+                    className="input-field"
+                    rows={3}
+                  />
+                </div>
+              )}
+
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setDeleteModalOpen(false)}
+                  disabled={deleting}
+                  className="px-4 py-2 rounded-full border border-canopy-mist-200 text-canopy-ink-900 hover:bg-canopy-sand-100 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmDelete}
+                  disabled={deleting}
+                  className="px-4 py-2 rounded-full bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50"
+                >
+                  {deleting ? 'Deleting...' : 'Delete'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

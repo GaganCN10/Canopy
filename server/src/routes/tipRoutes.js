@@ -24,8 +24,8 @@ router.post('/', strictRateLimit, validate([
 
 router.get('/', authMiddleware, roleGuard('ranger', 'admin'), validate([
   query('page').optional().isInt({ min: 1 }),
-  query('limit').optional().isInt({ min: 1, max: 100 }),
-  query('status').optional().isIn(['new', 'under_review', 'actioned', 'closed']),
+  query('limit').optional().isInt({ min: 1, max: 1000 }),
+  query('status').optional({ nullable: true }).isString().trim(),
 ]), listTipsHandler);
 
 router.get('/:id', authMiddleware, roleGuard('ranger', 'admin'), validate([

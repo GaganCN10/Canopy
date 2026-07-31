@@ -29,10 +29,10 @@ const LOCATION_TYPES = ['remote', 'onsite', 'hybrid'];
 const STATUSES = ['planning', 'active', 'completed', 'archived', 'cancelled'];
 
 router.get('/', validate([
-  query('topic').optional().isIn(MISSION_TOPICS),
-  query('locationType').optional().isIn(LOCATION_TYPES),
-  query('status').optional().isIn(STATUSES),
-  query('remoteOnly').optional().isBoolean(),
+  query('topic').optional().isString().trim().custom((val) => !val || MISSION_TOPICS.includes(val)),
+  query('locationType').optional().isString().trim().custom((val) => !val || LOCATION_TYPES.includes(val)),
+  query('status').optional().isString().trim().custom((val) => !val || STATUSES.includes(val)),
+  query('remoteOnly').optional().isString().custom((val) => !val || ['true', 'false'].includes(val)),
   query('nearLng').optional().isFloat({ min: -180, max: 180 }),
   query('nearLat').optional().isFloat({ min: -90, max: 90 }),
   query('nearRadius').optional().isInt({ min: 0 }),
