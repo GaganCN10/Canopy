@@ -10,6 +10,10 @@ import Profile from './pages/Profile';
 import AdminUsers from './pages/AdminUsers';
 import AdminSpecies from './pages/AdminSpecies';
 import Species from './pages/Species';
+import SpeciesPredict from './pages/SpeciesPredict';
+import CameraTrapTriage from './pages/CameraTrapTriage';
+import BioacousticPredict from './pages/BioacousticPredict';
+import ThreatAudioDetect from './pages/ThreatAudioDetect';
 import AdminGeofences from './pages/AdminGeofences';
 import AdminRoleRequests from './pages/AdminRoleRequests';
 import ReviewRoleRequest from './pages/ReviewRoleRequest';
@@ -79,6 +83,10 @@ function App() {
               <Route path="reset-password" element={<ResetPassword />} />
               <Route path="unauthorized" element={<h1>Unauthorized</h1>} />
               <Route path="species" element={<Species />} />
+              <Route path="species/predict" element={<SpeciesPredict />} />
+              <Route path="camera-trap" element={<CameraTrapTriage />} />
+              <Route path="bioacoustic" element={<BioacousticPredict />} />
+              <Route path="threat-audio" element={<ThreatAudioDetect />} />
               <Route path="sightings" element={<Sightings />} />
               <Route path="sightings/report" element={<ReportSighting />} />
               <Route path="map" element={<MapPage />} />

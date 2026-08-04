@@ -31,6 +31,12 @@ Thumbs.db
 ml-service/app/ml_models/*.pt
 ml-service/app/ml_models/*.pkl
 ml-service/app/ml_models/*.onnx
+ml-service/models/*.pt
+ml-service/models/*.pkl
+ml-service/models/*.json
+
+# ML datasets (large files, not for git)
+ml-service/datasets/
 
 # Test coverage
 coverage

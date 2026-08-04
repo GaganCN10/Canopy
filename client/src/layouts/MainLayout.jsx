@@ -10,6 +10,10 @@ import { StatusBadge } from '../components/ui';
 const PRIMARY_NAV = [
   { label: 'Home', href: '/' },
   { label: 'Species', href: '/species' },
+  { label: 'Identify', href: '/species/predict' },
+  { label: 'Camera Trap', href: '/camera-trap' },
+  { label: 'Bioacoustic', href: '/bioacoustic' },
+  { label: 'Threat Audio', href: '/threat-audio' },
   { label: 'Articles', href: '/articles' },
   { label: 'Map', href: '/map' },
   { label: 'Missions', href: '/missions' },

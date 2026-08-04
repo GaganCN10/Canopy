@@ -13,6 +13,7 @@ import missionRoutes from './missionRoutes.js';
 import articleRoutes from './articleRoutes.js';
 import roleRequestRoutes from './roleRequestRoutes.js';
 import sessionRoutes from './sessionRoutes.js';
+import mlRoutes from './mlRoutes.js';
 
 export default function mountRoutes(app) {
   app.use('/api/auth', authRoutes);
@@ -29,4 +30,5 @@ export default function mountRoutes(app) {
   app.use('/api/articles', articleRoutes);
   app.use('/api/role-requests', roleRequestRoutes);
   app.use('/api/sessions', sessionRoutes);
+  app.use('/api/ml', mlRoutes);
 }
