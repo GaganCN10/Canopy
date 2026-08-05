@@ -14,10 +14,13 @@ import SpeciesPredict from './pages/SpeciesPredict';
 import CameraTrapTriage from './pages/CameraTrapTriage';
 import BioacousticPredict from './pages/BioacousticPredict';
 import ThreatAudioDetect from './pages/ThreatAudioDetect';
+import HabitatMonitor from './pages/HabitatMonitor';
 import AdminGeofences from './pages/AdminGeofences';
 import AdminRoleRequests from './pages/AdminRoleRequests';
 import ReviewRoleRequest from './pages/ReviewRoleRequest';
 import AdminInviteCodes from './pages/AdminInviteCodes';
+import TradeScanner from './pages/TradeScanner';
+import AdminTradeFlags from './pages/AdminTradeFlags';
 import Sightings from './pages/Sightings';
 import ReportSighting from './pages/ReportSighting';
 import MapPage from './pages/MapPage';
@@ -87,6 +90,8 @@ function App() {
               <Route path="camera-trap" element={<CameraTrapTriage />} />
               <Route path="bioacoustic" element={<BioacousticPredict />} />
               <Route path="threat-audio" element={<ThreatAudioDetect />} />
+              <Route path="habitat" element={<HabitatMonitor />} />
+              <Route path="trade-scanner" element={<TradeScanner />} />
               <Route path="sightings" element={<Sightings />} />
               <Route path="sightings/report" element={<ReportSighting />} />
               <Route path="map" element={<MapPage />} />
@@ -189,6 +194,14 @@ function App() {
                 element={
                   <ProtectedRoute allowedRoles={['admin']}>
                     <AdminInviteCodes />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="admin/trade-flags"
+                element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminTradeFlags />
                   </ProtectedRoute>
                 }
               />

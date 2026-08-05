@@ -16,7 +16,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(predict.router, prefix="/predict", tags=["predict"])
+app.include_router(predict.router, tags=["predict"])
 
 
 @app.get("/health")

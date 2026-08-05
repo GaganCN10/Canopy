@@ -20,59 +20,61 @@ export const checkMLHealth = async () => {
 };
 
 export const predictSpeciesImage = async (formData) => {
-  const { data } = await mlClient.post('/predict/species-image', formData, {
+  const { data } = await mlClient.post('/species-image', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
   return data;
 };
 
 export const triageCameraTrap = async (formData) => {
-  const { data } = await mlClient.post('/predict/camera-trap', formData, {
+  const { data } = await mlClient.post('/camera-trap', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
   return data;
 };
 
 export const predictBioacoustic = async (formData) => {
-  const { data } = await mlClient.post('/predict/bioacoustic', formData, {
+  const { data } = await mlClient.post('/bioacoustic', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
   return data;
 };
 
 export const predictThreatAudio = async (formData) => {
-  const { data } = await mlClient.post('/predict/threat-audio', formData, {
+  const { data } = await mlClient.post('/threat-audio', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
   return data;
 };
 
 export const getHabitatNDVI = async (payload) => {
-  const { data } = await mlClient.post('/predict/habitat-ndvi', payload);
+  const { data } = await mlClient.post('/habitat-ndvi', payload);
   return data;
 };
 
 export const getPoachingHotspots = async (payload) => {
-  const { data } = await mlClient.post('/predict/poaching-hotspots', payload);
+  const { data } = await mlClient.post('/poaching-hotspots', payload);
   return data;
 };
 
 export const getPopulationForecast = async (payload) => {
-  const { data } = await mlClient.post('/predict/population-forecast', payload);
+  const { data } = await mlClient.post('/population-forecast', payload);
   return data;
 };
 
 export const detectAnomalies = async (payload) => {
-  const { data } = await mlClient.post('/predict/anomalies', payload);
+  const { data } = await mlClient.post('/anomalies', payload);
   return data;
 };
 
 export const scanTradeText = async (payload) => {
-  const { data } = await mlClient.post('/predict/trade-scan', payload);
+  const { data } = await mlClient.post('/trade-scan', payload);
   return data;
 };
 
 export const getMovementCorridors = async (payload) => {
-  const { data } = await mlClient.post('/predict/movement-corridors', payload);
+  const { data } = await mlClient.post('/movement-corridors', payload, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
   return data;
 };

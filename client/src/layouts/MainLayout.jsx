@@ -14,6 +14,8 @@ const PRIMARY_NAV = [
   { label: 'Camera Trap', href: '/camera-trap' },
   { label: 'Bioacoustic', href: '/bioacoustic' },
   { label: 'Threat Audio', href: '/threat-audio' },
+  { label: 'Habitat', href: '/habitat' },
+  { label: 'Trade Scanner', href: '/trade-scanner' },
   { label: 'Articles', href: '/articles' },
   { label: 'Map', href: '/map' },
   { label: 'Missions', href: '/missions' },
