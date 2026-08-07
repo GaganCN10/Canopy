@@ -20,30 +20,22 @@ export const checkMLHealth = async () => {
 };
 
 export const predictSpeciesImage = async (formData) => {
-  const { data } = await mlClient.post('/species-image', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+  const { data } = await mlClient.post('/species-image', formData);
   return data;
 };
 
 export const triageCameraTrap = async (formData) => {
-  const { data } = await mlClient.post('/camera-trap', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+  const { data } = await mlClient.post('/camera-trap', formData);
   return data;
 };
 
 export const predictBioacoustic = async (formData) => {
-  const { data } = await mlClient.post('/bioacoustic', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+  const { data } = await mlClient.post('/bioacoustic', formData);
   return data;
 };
 
 export const predictThreatAudio = async (formData) => {
-  const { data } = await mlClient.post('/threat-audio', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+  const { data } = await mlClient.post('/threat-audio', formData);
   return data;
 };
 
@@ -72,9 +64,7 @@ export const scanTradeText = async (payload) => {
   return data;
 };
 
-export const getMovementCorridors = async (payload) => {
-  const { data } = await mlClient.post('/movement-corridors', payload, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+export const getMovementCorridors = async (formData) => {
+  const { data } = await mlClient.post('/movement-corridors', formData);
   return data;
 };

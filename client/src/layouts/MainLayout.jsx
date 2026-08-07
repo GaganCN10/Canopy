@@ -1,25 +1,49 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { motion, useScroll } from 'framer-motion';
-import { Leaf, Menu, X, Bell, User } from 'lucide-react';
+import { Leaf, Menu, X, Bell, User, ChevronDown } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { io } from 'socket.io-client';
 import { getNotifications, markAllNotificationsAsRead } from '../features/notifications/notificationApi';
 import { StatusBadge } from '../components/ui';
 
-const PRIMARY_NAV = [
+const NAV_GROUPS = [
   { label: 'Home', href: '/' },
   { label: 'Species', href: '/species' },
-  { label: 'Identify', href: '/species/predict' },
-  { label: 'Camera Trap', href: '/camera-trap' },
-  { label: 'Bioacoustic', href: '/bioacoustic' },
-  { label: 'Threat Audio', href: '/threat-audio' },
-  { label: 'Habitat', href: '/habitat' },
-  { label: 'Trade Scanner', href: '/trade-scanner' },
-  { label: 'Articles', href: '/articles' },
-  { label: 'Map', href: '/map' },
-  { label: 'Missions', href: '/missions' },
-  { label: 'Analytics', href: '/analytics' },
+  {
+    label: 'Explore',
+    href: '#',
+    children: [
+      { label: 'Map', href: '/map' },
+      { label: 'Articles', href: '/articles' },
+    ],
+  },
+  {
+    label: 'Identify',
+    href: '#',
+    children: [
+      { label: 'Identify Species', href: '/species/predict' },
+      { label: 'Camera Trap', href: '/camera-trap' },
+      { label: 'Bioacoustic', href: '/bioacoustic' },
+      { label: 'Threat Audio', href: '/threat-audio' },
+    ],
+  },
+  {
+    label: 'Tools',
+    href: '#',
+    children: [
+      { label: 'Habitat Monitor', href: '/habitat' },
+      { label: 'Trade Scanner', href: '/trade-scanner' },
+      { label: 'Analytics', href: '/analytics' },
+    ],
+  },
+  {
+    label: 'Community',
+    href: '#',
+    children: [
+      { label: 'Missions', href: '/missions' },
+    ],
+  },
 ];
 
 const REPORT_ITEMS = [
@@ -27,6 +51,45 @@ const REPORT_ITEMS = [
   { label: 'Report HWC', href: '/hwc/report' },
   { label: 'Rescue', href: '/rescue' },
 ];
+
+function NavDropdown({ label, items = [], isActive }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <button
+        className={`flex items-center gap-1 text-sm font-medium transition-colors duration-200 ${
+          isActive ? 'text-canopy-forest-600' : 'text-canopy-ink-900/70 hover:text-canopy-forest-600'
+        }`}
+        onClick={() => setOpen((prev) => !prev)}
+      >
+        {label}
+        <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+      </button>
+      <div className={`absolute top-full left-0 mt-2 w-48 transition-all duration-200 z-50 ${
+        open
+          ? 'opacity-100 visible translate-y-0'
+          : 'opacity-0 invisible translate-y-2'
+      }`}>
+        <div className="bg-white border border-canopy-mist-200 rounded-2xl shadow-ambient-lg p-2">
+          {items.map((item) => (
+            <Link
+              key={item.href}
+              to={item.href}
+              className="block px-4 py-2 text-sm text-canopy-ink-900/80 hover:bg-canopy-sand-100 rounded-xl transition-colors"
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function MainLayout() {
   const [scrolled, setScrolled] = useState(false);
@@ -108,23 +171,32 @@ function MainLayout() {
               <span className="font-display text-2xl font-semibold text-canopy-forest-950 tracking-tight">Canopy</span>
             </Link>
 
-            <div className="hidden lg:flex items-center gap-8">
-              {PRIMARY_NAV.map((item) => (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  className={`text-sm font-medium transition-colors duration-200 ${
-                    location.pathname === item.href
-                      ? 'text-canopy-forest-600'
-                      : 'text-canopy-ink-900/70 hover:text-canopy-forest-600'
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              ))}
+            <div className="hidden lg:flex items-center gap-6">
+              {NAV_GROUPS.map((item) => {
+                if (item.children) {
+                  const isActive = item.children.some((child) => location.pathname === child.href);
+                  return (
+                    <NavDropdown key={item.label} label={item.label} isActive={isActive} items={item.children} />
+                  );
+                }
+                return (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    className={`text-sm font-medium transition-colors duration-200 ${
+                      location.pathname === item.href
+                        ? 'text-canopy-forest-600'
+                        : 'text-canopy-ink-900/70 hover:text-canopy-forest-600'
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
               <div className="relative group">
                 <button className="flex items-center gap-1 text-sm font-medium text-canopy-ink-900/70 hover:text-canopy-forest-600 transition-colors">
                   Report
+                  <ChevronDown className="w-4 h-4" />
                 </button>
                 <div className="absolute top-full right-0 mt-2 w-48 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0">
                   <div className="bg-white border border-canopy-mist-200 rounded-2xl shadow-ambient-lg p-2">
@@ -235,20 +307,43 @@ function MainLayout() {
             className="lg:hidden bg-canopy-sand-50/95 backdrop-blur-md border-b border-canopy-mist-200"
           >
             <div className="px-4 py-4 space-y-1">
-              {PRIMARY_NAV.map((item) => (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  onClick={() => setMobileOpen(false)}
-                  className={`block px-4 py-3 rounded-xl text-base font-medium ${
-                    location.pathname === item.href
-                      ? 'bg-canopy-sand-100 text-canopy-forest-600'
-                      : 'text-canopy-ink-900/80 hover:bg-canopy-sand-100'
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              ))}
+              {NAV_GROUPS.map((item) => {
+                if (item.children) {
+                  return (
+                    <div key={item.label}>
+                      <p className="px-4 text-xs font-semibold text-canopy-ink-900/50 uppercase tracking-wider mb-1">{item.label}</p>
+                      {item.children.map((child) => (
+                        <Link
+                          key={child.href}
+                          to={child.href}
+                          onClick={() => setMobileOpen(false)}
+                          className={`block px-4 py-3 rounded-xl text-base font-medium ${
+                            location.pathname === child.href
+                              ? 'bg-canopy-sand-100 text-canopy-forest-600'
+                              : 'text-canopy-ink-900/80 hover:bg-canopy-sand-100'
+                          }`}
+                        >
+                          {child.label}
+                        </Link>
+                      ))}
+                    </div>
+                  );
+                }
+                return (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    onClick={() => setMobileOpen(false)}
+                    className={`block px-4 py-3 rounded-xl text-base font-medium ${
+                      location.pathname === item.href
+                        ? 'bg-canopy-sand-100 text-canopy-forest-600'
+                        : 'text-canopy-ink-900/80 hover:bg-canopy-sand-100'
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
               {isAuthenticated && (
                 <Link
                   to="/profile"

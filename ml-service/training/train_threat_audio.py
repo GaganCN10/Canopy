@@ -1,17 +1,17 @@
 import os
+import sys
+from pathlib import Path
+
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from pathlib import Path
 import json
 import librosa
 
-try:
-    from app.models.threat_audio_model import preprocess_audio
-except Exception:
-    from threat_audio_model import preprocess_audio
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from app.models.threat_audio_model import preprocess_audio, _build_model
 
 DATA_DIR = Path("datasets/threat_audio")
 MODEL_DIR = Path("models")
@@ -58,7 +58,6 @@ def get_dataloaders():
 
 
 def build_model():
-    from app.models.threat_audio_model import _build_model
     return _build_model(num_classes=NUM_CLASSES)
 
 

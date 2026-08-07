@@ -1,0 +1,933 @@
+# Canopy — Implemented Features
+
+Exhaustive list of every atomic feature implemented in the Canopy platform.
+Last updated: 2026-08-07
+
+---
+
+## 1. Authentication & Authorization
+
+### 1.1 User Registration
+- Email-based account creation with first name, last name
+- Password strength validation (minimum 8 characters, uppercase, lowercase, number)
+- Client-side password strength meter (4-level leaf indicator)
+- Terms and privacy policy acceptance checkbox
+- Server-side validation with express-validator
+- Strict rate limiting on registration endpoint
+- JWT access token (15 min) + refresh token (7 days) issuance
+- Session creation in MongoDB on registration
+
+### 1.2 User Login
+- Email/password authentication
+- "Remember me" checkbox
+- Client-side form validation
+- Server-side credential verification
+- Access token + refresh token return
+- Redux auth state initialization
+- Redirect to stored destination after login
+
+### 1.3 Logout
+- Refresh token blacklisting in MongoDB
+- Session revocation
+- Client-side token cleanup (localStorage)
+- Redux auth state reset
+
+### 1.4 Password Reset Flow
+- Forgot password: email submission with rate limiting
+- Password reset token generation and storage
+- Reset password email sending via Nodemailer
+- Reset password page with token validation from URL
+- New password with confirmation field
+- Password strength requirements enforcement
+- Success/error feedback UI
+
+### 1.5 Change Password (Authenticated)
+- Current password verification
+- New password with confirmation
+- Minimum 8 character enforcement
+- Success/error feedback
+
+### 1.6 JWT Authentication Middleware
+- Bearer token extraction from Authorization header
+- Access token verification
+- User loading from database
+- Request attachment of user object
+
+### 1.7 Refresh Token Flow
+- Refresh token endpoint with rate limiting
+- Token rotation (new access + refresh tokens)
+- Old refresh token invalidation
+
+### 1.8 Role-Based Access Control (RBAC)
+- Six roles: public, citizen, ranger, researcher, rescue, admin
+- roleGuard middleware for route protection
+- Per-route role requirements
+- Mission-level role guard (lead, co-lead, member)
+
+### 1.9 Session Management
+- List all active sessions for authenticated user
+- Session metadata (browser, OS, IP, timestamps)
+- Revoke individual session
+- Revoke all sessions (logout from all devices)
+
+### 1.10 User Profile Management
+- View own profile
+- Update first name, last name, phone, organization
+- Profile photo upload via multipart/form-data
+- Avatar display with initials fallback
+
+### 1.11 Role Request System
+- Submit request for elevated role (researcher_ngo, ranger, rescue_center_staff)
+- Document upload (PDF, DOC, DOCX, images, max 10MB)
+- Invite code support for accelerated approval
+- Admin review and approval/rejection
+- Rejection reason requirement
+- Role profile activation after approval
+- Role-specific profile forms:
+  - Researcher/NGO: org name, org type, position, website, phone, qualifications, specializations, bio
+  - Ranger: department, designation, badge/employee ID, phone, qualifications, experience
+  - Rescue Center Staff: center name, center address, center role, phone, qualifications, certifications
+
+### 1.12 Invite Code System
+- Admin-generated invite codes with expiry
+- Code status tracking (active, used, expired)
+- Public invite code validation endpoint
+- Invite code redemption during role request
+- Code listing for admins
+
+### 1.13 Protected Routes
+- Client-side ProtectedRoute component
+- Role-based route guards (allowedRoles prop)
+- Redirect to login for unauthenticated users
+- Redirect to home for unauthorized roles
+
+---
+
+## 2. User Management (Admin)
+
+### 2.1 User Listing
+- Paginated user list with search
+- Display user name, email, role, status
+
+### 2.2 Role Assignment
+- Admin can change any user's role
+- Role validation against allowed values
+
+### 2.3 User Banning
+- Admin can ban/unban users
+- Ban status reflected in user record
+
+---
+
+## 3. Species Management
+
+### 3.1 Species Catalog
+- Public species listing with pagination
+- Search by name/scientific name
+- Conservation status badge display (LC, NT, VU, EN, CR, EW, DD, NE)
+- Species detail cards with images, description, region tags
+
+### 3.2 Species CRUD (Admin)
+- Create species with name, scientific name, conservation status, description, region, images
+- Update species fields
+- Delete species
+- Validation on all inputs
+
+### 3.3 Species Image Upload
+- Authenticated image upload to species records
+- File type and size validation
+
+---
+
+## 4. Wildlife Sightings
+
+### 4.1 Report Sighting
+- Multi-step form: Species → Location → Photo
+- Species search with autocomplete dropdown
+- Create new species inline if not found
+- GPS location capture via browser Geolocation API
+- Manual lat/lng input fallback
+- Image upload with preview
+- Notes field
+- Authenticated submission
+
+### 4.2 Sighting Listing
+- Public sightings list with pagination
+- Filter by species
+- Filter by verification status (pending, verified, rejected)
+- Species search/filter
+- Image thumbnail display
+- Location coordinates display
+- Date display
+- Vote count display
+
+### 4.3 Sighting Voting/Verification
+- Upvote/downvote on sightings
+- Vote count tracking
+- Community verification mechanism
+
+### 4.4 Sighting Detail
+- View single sighting by ID
+- Full details display
+
+---
+
+## 5. Anti-Poaching Intelligence (Tips)
+
+### 5.1 Submit Tip
+- Anonymous or identified tip submission
+- Title and description fields
+- GPS location capture (optional)
+- Contact email and phone (optional)
+- Anonymous toggle
+- Multi-step form UI
+- Strict rate limiting on submission
+
+### 5.2 Tip Listing (Ranger/Admin)
+- Paginated tip list
+- Filter by status (new, under_review, actioned, closed)
+- Tip metadata display (source, date, location)
+
+### 5.3 Tip Detail (Ranger/Admin)
+- View full tip details
+- Submission metadata
+
+### 5.4 Tip Status Management (Ranger/Admin)
+- Update tip status: new → under_review → actioned → closed
+- Add review notes
+- Status transition tracking
+
+---
+
+## 6. Human-Wildlife Conflict (HWC)
+
+### 6.1 Report HWC Incident
+- Incident type selection: crop_raiding, livestock_predation, property_damage, injury, fatal, other
+- Description field
+- GPS location capture
+- Loss description field
+- Authenticated submission
+
+### 6.2 HWC Incident Listing
+- Paginated incident list
+- Filter by incident type
+- Type badge display with color coding
+
+### 6.3 Geofence Zones
+- List all geofence zones
+- Create new geofence zone (Admin)
+- Zone name, description, coordinates
+- Map visualization of zones
+- Coordinate parsing from text input (lng,lat; lng,lat; ...)
+
+---
+
+## 7. Rescue & Rehabilitation
+
+### 7.1 Create Rescue Case
+- Species selection from catalog
+- Rescue reason field
+- Rescue center assignment
+- Animal details: age, sex, weight, condition
+- GPS location capture
+- Authenticated submission
+
+### 7.2 Rescue Case Listing
+- Paginated case list
+- Filter by status (intake, in_care, released, deceased)
+- Filter by rescue center
+
+### 7.3 Rescue Case Detail
+- View full case details
+- Animal information display
+- Timeline of status changes
+
+### 7.4 Update Rescue Status
+- Status transitions: intake → in_care → released/deceased
+- Release notes field
+- Status history tracking
+
+### 7.5 Treatment Log
+- Add treatment notes to rescue case
+- Treatment description field
+- Veterinarian name field
+- Timestamped log entries
+
+---
+
+## 8. Missions & Volunteer Coordination
+
+### 8.1 Mission Listing
+- Public mission list with pagination
+- Filter by topic: cleanup, monitoring, awareness_education, data_tagging, rescue_support, advocacy, other
+- Filter by location type: remote, onsite, hybrid
+- Filter by status: planning, active, completed, archived, cancelled
+- Filter by remote-only
+- Near-location filter (lat, lng, radius)
+
+### 8.2 Mission Detail
+- View full mission details
+- Description, topic, location type
+- Join type display (open/request)
+- Member count vs cap
+- Target date
+- Thread/discussion display
+
+### 8.3 Create Mission
+- Authenticated creation (citizen, ranger, researcher, rescue, admin)
+- Title, description, topic, location type
+- Join type selection (open/request)
+- Member cap setting
+- Target date setting
+- Location and address fields
+- Strict rate limiting
+
+### 8.4 Mission Update
+- Lead/co-lead can edit mission details
+- Title, description, topic, location type updates
+- Status changes
+- Member cap adjustments
+
+### 8.5 Mission Status Management
+- Lead/co-lead can change mission status
+- Statuses: planning, active, completed, archived, cancelled
+
+### 8.6 Join Mission
+- Users can join open missions
+- Request to join request-only missions
+- Join message field
+- Member cap enforcement
+
+### 8.7 Join Request Approval
+- Lead/co-lead can approve join requests
+- Member removal by lead/co-lead
+
+### 8.8 Co-Lead Assignment
+- Lead can add co-leads
+- Co-lead inherits editing permissions
+
+### 8.9 Mission Thread/Discussion
+- Members-only thread access
+- Create posts/updates in thread
+- Content field with max length
+- Attachment support
+- Parent post threading (replies)
+- Strict rate limiting on posts
+
+### 8.10 Mission Tasks
+- Members can create tasks
+- Task title, description
+- Assign to member
+- Due date setting
+- Task status: open, in_progress, done
+- Task update and assignment changes
+
+### 8.11 My Missions
+- View missions user leads
+- View missions user has joined
+- View completed missions
+- Stats: action items done, missions participated
+
+---
+
+## 9. Articles & Education
+
+### 9.1 Article Listing
+- Public article list with pagination
+- Filter by topic: species-id, habitats, coexistence, anti-poaching, citizen-science, ecosystems, other
+- Search by title/content
+- Sort: newest, most-read
+
+### 9.2 Article Detail
+- View full article by slug
+- Read count tracking
+
+### 9.3 Create Article
+- Authenticated creation (researcher, ranger, admin)
+- Title, body, topic, status (draft/published)
+- Slug generation
+- Strict rate limiting
+
+### 9.4 Update Article
+- Author/admin can edit articles
+- Title, body, topic, status, slug updates
+
+### 9.5 Delete Article
+- Soft or hard delete with optional reason
+
+### 9.6 Article Quiz System
+- Attach quiz to article
+- Pass threshold percentage setting
+- Retake policy: unlimited or single-attempt
+- Question array support
+- Quiz attempt tracking per user
+- Quiz attempt listing for user
+- Score calculation and pass/fail status
+
+---
+
+## 10. Interactive Map
+
+### 10.1 Map View
+- Full-screen interactive Leaflet map
+- OpenStreetMap tile layer
+- Sightings layer with markers
+- HWC incidents layer
+- Anti-poaching tips layer
+- Poaching hotspot layer (ML-generated)
+- Movement corridor layer (GPX/CSV)
+- Layer toggling via LayersControl
+- Fit bounds to all visible data
+- Popup details on markers
+
+### 10.2 Map Filtering
+- Filter sightings by species
+- Filter HWC by type
+- Toggle layers on/off
+
+---
+
+## 11. Analytics Dashboard
+
+### 11.1 Dashboard Summary
+- Total sightings count
+- Total species count
+- Total tips count
+- Active missions count
+- Pending role requests count
+
+### 11.2 Sightings Over Time
+- Time series chart of sightings
+- Configurable time range (days parameter)
+
+### 11.3 Species Distribution
+- Pie chart of sightings by species
+- Conservation status breakdown
+
+### 11.4 Verification Stats
+- Verification rate statistics
+- Pending vs verified vs rejected breakdown
+
+### 11.5 Population Forecast
+- ML-powered population forecasting per species
+- Prophet-based time series prediction
+- Configurable forecast periods
+- Line chart visualization with confidence intervals
+
+### 11.6 Anomaly Detection
+- Rolling z-score anomaly detection on sighting time series
+- Configurable window and threshold
+- Spike/drop direction labeling
+- Anomaly list with dates and values
+
+---
+
+## 12. Notifications
+
+### 12.1 In-App Notifications
+- Real-time notification delivery via Socket.IO
+- User-specific notification rooms
+- Notification list with pagination
+- Unread count tracking
+- Mark individual notification as read
+- Mark all notifications as read
+- Notification dropdown in navigation bar
+- Bell icon with unread indicator
+
+### 12.2 Email Notifications
+- Nodemailer integration
+- SMTP configuration support
+- HTML email templates
+- Email sending on key events (e.g., threat detection)
+
+### 12.3 SMS/WhatsApp Notifications
+- Twilio integration (optional, disabled without credentials)
+- Configurable SMS/WhatsApp sending
+
+---
+
+## 13. ML-Powered Features (via ML Service Proxy)
+
+All ML endpoints are proxied through `/api/ml/*` on the backend, which forwards to the Python FastAPI ML service at `http://localhost:8000`.
+
+### 13.1 Species Image Identification
+- Upload image for species classification
+- EfficientNet-B0 model (20 Indian wildlife species classes)
+- Top-K predictions with confidence scores
+- Model weights: `models/species_classifier_best.pth`
+- Class mapping: `models/species_classes.json`
+
+### 13.2 Camera Trap Triage
+- Upload camera trap image for automated triage
+- 4-class classification: animal, person, vehicle, blank
+- EfficientNet-B0 model
+- Top-K predictions display
+- Model weights: `models/camera_trap_classifier_best.pth`
+- Class mapping: `models/camera_trap_classes.json`
+
+### 13.3 Bioacoustic Species Identification
+- Upload audio file for bird species identification
+- BirdNET-analyzer integration
+- Configurable species list
+- Segment-level predictions with timestamps
+- Confidence filtering
+- Species list file: `models/bioacoustic_species.txt`
+
+### 13.4 Threat Audio Detection
+- Upload audio for threat sound detection
+- 2-class classification: threat, non_threat
+- YAMNet or simple 1D CNN model
+- Model weights: `models/threat_audio_classifier_best.pth`
+- Class mapping: `models/threat_audio_classes.json`
+- Auto-tip creation on high-confidence threat detection (≥0.7)
+- In-app + email notification on threat detection
+
+### 13.5 Habitat NDVI Monitoring
+- Draw region on map for NDVI computation
+- Sentinel-2 L2A tile search via Planetary Computer STAC API
+- Cloud cover filtering (configurable max %)
+- Red (B04) and NIR (B08) band extraction
+- NDVI computation per tile: (NIR - Red) / (NIR + Red)
+- Summary statistics: mean, min, max, median, std, valid pixels, total pixels
+- NDVI interpretation guide (bare soil → lush vegetation)
+- Multi-tile aggregation
+
+### 13.6 Poaching Hotspot Detection
+- Kernel Density Estimation (KDE) on geospatial points
+- Configurable bandwidth and grid size
+- Fallback to Tips + Sightings database if no points provided
+- GeoJSON FeatureCollection output with intensity values
+- Top-N hotspot summarization
+- Requires ranger, admin, or researcher role
+
+### 13.7 Population Forecasting
+- Prophet-based time series forecasting
+- Input: historical sightings with timestamps
+- Daily count aggregation
+- Configurable forecast periods (default 30)
+- Seasonality mode configuration
+- Forecast with confidence intervals (yhat, yhat_lower, yhat_upper)
+
+### 13.8 Anomaly Detection
+- Rolling z-score anomaly detection on daily sighting counts
+- Configurable window size and threshold
+- Spike/drop direction classification
+- Bounding box geo-filtering of sightings
+- Date range filtering
+- Requires admin or researcher role
+
+### 13.9 Movement Corridors
+- GPX file upload and parsing
+- CSV file upload and parsing (latitude/longitude columns)
+- Flexible column name detection (lat, latitude, lng, lon, etc.)
+- Timestamp extraction from GPX/CSV
+- GeoJSON LineString output
+- Point count tracking
+
+### 13.10 Wildlife Trade Scanner
+- Text scanning for illegal wildlife trade indicators
+- Keyword-based classification with 30+ keywords
+- Confidence scoring (0.0–0.95)
+- Matched keyword extraction
+- Case-insensitive matching
+- Trade flag creation on flagged results
+- Persistent storage in MongoDB (TradeFlag model)
+
+### 13.11 Trade Flag Review Queue
+- Admin view of all flagged trade listings
+- Filter by status: pending, approved, dismissed
+- Paginated flag listing
+- Approve/dismiss actions
+- Review notes field
+- Flag detail with source, text, matched keywords, confidence
+- No autonomous enforcement action — human review required
+
+---
+
+## 14. ML Training Infrastructure
+
+### 14.1 Dataset Preparation Scripts
+- `prepare_dataset.py` — iNaturalist API image download for species classifier
+- `prepare_dataset_gbif.py` — GBIF API image download for species classifier
+- `prepare_dataset_v2.py` — iNaturalist with scientific name search
+- `fetch_missing.py` — Targeted download for missing species classes
+- `fetch_missing_v2.py` — v2 targeted download
+- `prepare_camera_trap_dataset.py` — Synthetic image generation for camera trap (animal, person, vehicle, blank)
+- `prepare_threat_audio_dataset.py` — Synthetic audio generation for threat audio (non_threat, threat)
+
+### 14.2 Training Scripts
+- `train_species_classifier.py` — EfficientNet-B0 fine-tuning for 20 species classes
+- `train_camera_trap.py` — EfficientNet-B0 fine-tuning for 4 camera trap classes
+- `train_threat_audio.py` — 1D CNN or YAMNet training for 2-class audio classification
+
+### 14.3 Training Features
+- Train/validation split (80/20)
+- Best model checkpoint saving
+- Class mapping JSON export
+- Device auto-detection (CUDA/CPU)
+- Progress logging (loss, accuracy per epoch)
+- Early stopping on best validation accuracy
+
+---
+
+## 15. Security & Infrastructure
+
+### 15.1 Helmet Security Headers
+- Content Security Policy (CSP) with strict directives
+- Default src, script src, style src, img src, connect src, font src, object src, media src, frame src restrictions
+- Cross-origin embedder policy disabled for ML service compatibility
+
+### 15.2 MongoDB Sanitization
+- express-mongo-sanitize middleware
+- Prevention of NoSQL injection attacks
+
+### 15.3 Rate Limiting
+- Global rate limiter: 100 requests per 15 minutes
+- Strict rate limiter for sensitive endpoints (auth, tips, role requests, missions, articles)
+- Configurable per-route limits
+
+### 15.4 CORS Configuration
+- Configurable allowed origin
+- Credentials support
+- Method and header whitelisting
+- Max age preflight cache
+
+### 15.5 Input Validation
+- express-validator on all routes
+- Email format validation
+- Password length validation
+- MongoDB ObjectId validation
+- Float/range validation for coordinates
+- ISO8601 date validation
+- Enum validation for status fields
+- Array length validation
+- Optional field handling
+
+### 15.6 File Upload Security
+- File type validation (images, audio, documents)
+- File size limits (5MB–20MB depending on endpoint)
+- Multipart/form-data handling
+- Secure filename handling
+
+### 15.7 Error Handling
+- Centralized error handling middleware
+- Consistent error response envelope
+- HTTP status code mapping
+- Stack trace suppression in production
+- Winston logger integration
+
+### 15.8 Logging
+- Winston logger with transports
+- Error logging on all controller catch blocks
+- Request/response logging capability
+
+### 15.9 Health Checks
+- `/health` endpoint on server
+- `/health` endpoint on ML service
+- Timestamp in health response
+
+---
+
+## 16. Real-Time Features
+
+### 16.1 Socket.IO Notifications
+- WebSocket connection establishment
+- User-specific room joining (by user ID)
+- Real-time notification push
+- Auto-reconnect handling
+- Notification dropdown live updates
+- Unread count increment on new notification
+
+---
+
+## 17. Client-Side Features
+
+### 17.1 Routing
+- React Router v6 with nested routes
+- 30+ route definitions
+- ProtectedRoute wrapper with role support
+- 404 catch-all redirect to home
+
+### 17.2 State Management
+- Redux Toolkit for global state
+- Auth slice (user, tokens, loading, initialized)
+- Persistent token storage in localStorage
+- Auth initialization on app load
+- Cross-tab auth sync via storage event listener
+
+### 17.3 UI Components
+- Toast notification system (success, error, info)
+- StatusBadge with color-coded roles
+- ConservationBadge for species conservation status
+- PageHeader with subtitle and actions
+- EmptyState for empty lists
+- Button variants (primary, secondary, clay)
+- InputField component
+- Spinner/Loading states
+- ErrorBoundary for React error catching
+
+### 17.4 Animations
+- Framer Motion page transitions
+- Scroll-triggered animations
+- Staggered list animations
+- Hover effects on cards
+- Parallax ambient scene on auth pages
+
+### 17.5 Responsive Design
+- Mobile-first Tailwind CSS
+- Hamburger menu for mobile navigation
+- Responsive grid layouts
+- Touch-friendly controls
+
+### 17.6 Notifications UI
+- Bell icon with unread badge
+- Notification dropdown panel
+- Mark all as read button
+- Notification list with timestamps
+- Unread/read visual distinction
+
+### 17.7 Profile UI
+- Avatar with photo upload
+- Role badge display
+- Basic info editing form
+- Password change form
+- Role request history display
+- Role profile activation form
+- Mission stats display
+- Quiz attempt history
+- Logout button
+
+### 17.8 Home Page
+- Hero section with background image
+- Animated counters (species tracked, sightings logged, active rescues, verified tips %)
+- Feature cards with navigation
+- Recent sightings preview grid
+
+### 17.9 Species Catalog UI
+- Search input with debounce
+- Conservation status filter button
+- Pagination controls
+- Species cards with hover effects
+- Region tags display
+- Empty state handling
+
+### 17.10 Sighting List UI
+- Species filter dropdown
+- Status filter dropdown
+- Vote buttons (upvote/downvote)
+- Pagination
+- Image thumbnail display
+- Location and date metadata
+
+### 17.11 Report Sighting UI
+- Multi-step form (3 steps)
+- Species search with dropdown
+- Inline species creation
+- GPS location capture
+- Image upload with preview
+- Progress indicator
+
+### 17.12 Submit Tip UI
+- Multi-step form
+- Anonymous toggle
+- Location capture
+- Contact info fields
+- Success/error feedback
+
+### 17.13 Report HWC UI
+- Incident type selector with icons and colors
+- Description field
+- Location capture
+- Loss description field
+- Type-specific color coding
+
+### 17.14 Rescue UI
+- Create rescue case form
+- Species selection
+- Animal details form (age, sex, weight, condition)
+- Location capture
+- Rescue case list with status filter
+- Rescue case detail view
+- Treatment log display
+- Status update form
+
+### 17.15 Mission UI
+- Mission list with filters
+- Mission detail view with thread
+- Create mission form
+- Join mission button
+- Task creation and management
+- Thread post creation
+- Co-lead and member management
+
+### 17.16 Article UI
+- Article list with topic filter and search
+- Article detail view
+- Quiz interface with answer selection
+- Quiz attempt history
+- Score and pass/fail display
+
+### 17.17 Map Page UI
+- Full-screen Leaflet map
+- Multiple overlay layers
+- Layer control panel
+- Fit bounds button
+- Data-driven markers and polygons
+
+### 17.18 Analytics Dashboard UI
+- Summary cards
+- Sightings over time line chart
+- Species distribution pie chart
+- Verification stats bar chart
+- Population forecast line chart with confidence band
+- Anomaly list with direction indicators
+
+### 17.19 ML Feature UIs
+- **Species Predict**: Image upload and prediction display
+- **Camera Trap Triage**: Image upload and triage result display
+- **Bioacoustic Predict**: Audio upload and segment predictions with timestamps
+- **Threat Audio Detect**: Audio upload and threat classification display
+- **Habitat Monitor**: Map with draw region, date range picker, NDVI summary cards, NDVI interpretation guide
+- **Trade Scanner**: Text input, source field, scan button, flagged/clean result display, matched keywords tags
+- **Admin Trade Flags**: Status filter tabs, flag list, approve/dismiss actions
+
+### 17.20 Admin UIs
+- **Admin Users**: User list, role change dropdown, ban toggle, search
+- **Admin Species**: Species CRUD interface
+- **Admin Tips**: Tip list, status update dropdown, review notes
+- **Admin Geofences**: Zone list, create zone form with coordinate input, map preview
+- **Admin Role Requests**: Request list with filters, approve/reject actions, document viewer
+- **Admin Invite Codes**: Code list, create code button, status badges
+- **Admin Trade Flags**: Pending/approved/dismissed tabs, flag review cards
+
+### 17.21 Session Management UI
+- Session list with browser, OS, IP, timestamps
+- Revoke individual session button
+- Revoke all sessions button
+- Current session highlighting
+
+### 17.22 Role Request UI
+- Role selection cards with descriptions
+- Document upload with type/size validation
+- Reason textarea
+- Invite code input
+- Submission status tracking
+
+### 17.23 Role Profile UI
+- Dynamic form based on approved role
+- Researcher/NGO fields: full name, org name, org type, position, website, phone, qualifications, specializations, bio
+- Ranger fields: full name, department, designation, badge ID, phone, qualifications, experience
+- Rescue Center Staff fields: full name, center name, center address, center role, phone, qualifications, certifications
+
+---
+
+## 18. Testing
+
+### 18.1 Client Tests (Vitest)
+- HabitatMonitor component tests
+- MapPage component tests
+- AnalyticsDashboard component tests
+- TradeScanner component tests
+- AdminTradeFlags component tests
+- Total: 40 tests across 5 test files
+
+### 18.2 ML Service Tests (pytest)
+- **test_api_predict.py** (30 tests): All FastAPI endpoint tests including health, species-image, camera-trap, bioacoustic, threat-audio, habitat-ndvi, poaching-hotspots, population-forecast, anomalies, movement-corridors, trade-scan
+- **test_anomaly_model.py** (10 tests): Rolling z-score and anomaly detection edge cases
+- **test_forecast_model.py** (8 tests): Daily count aggregation and Prophet forecasting
+- **test_hotspot_model.py** (9 tests): KDE hotspot computation and summarization
+- **test_movement_model.py** (16 tests): GPX parsing, CSV parsing, GeoJSON conversion
+- **test_ndvi_model.py** (9 tests): Tile finding, NDVI computation, error handling
+- **test_trade_scanner_model.py** (10 tests): Keyword classification and text scanning
+- Total: 92 tests across 7 test files
+
+---
+
+## 19. Documentation
+
+### 19.1 README.md
+- Project structure overview
+- Prerequisites list
+- Quick start guide (3-terminal setup)
+- Environment variable documentation
+- Running tests instructions
+- Available scripts table for client, server, and ML service
+- Project status with phase breakdown
+- License information
+
+### 19.2 docs/architecture.md
+- High-level system architecture diagram
+- Directory structure
+- Data flow diagrams (authentication, ML inference, notifications)
+- Key design decisions
+- External dependencies table
+- Security considerations
+
+### 19.3 docs/api-reference.md
+- Authentication endpoints
+- Users endpoints
+- Species endpoints
+- Sightings endpoints
+- Tips endpoints
+- HWC endpoints
+- Rescue endpoints
+- Missions endpoints
+- Articles endpoints
+- Analytics endpoints
+- Notifications endpoints
+- ML endpoints (via server proxy)
+- Trade scan endpoints
+- ML service direct endpoints
+- Error response format
+- Common HTTP status codes
+
+### 19.4 docs/Canopy_PRD.md
+- Product requirements document
+
+### 19.5 docs/features.txt (this file)
+- Exhaustive atomic feature list
+
+---
+
+## 20. Configuration & Deployment Support
+
+### 20.1 Environment Configuration
+- Server .env support (MongoDB URI, JWT secrets, CORS, Redis, ML service URL, SMTP, Twilio)
+- ML service .env support
+- Client .env support (Vite env vars for API base URL, Socket.IO URL)
+- dotenv loading in server
+
+### 20.2 Build Configuration
+- Vite production build
+- ESLint configuration
+- Prettier configuration
+- npm scripts for lint, format, build, preview
+
+### 20.3 Development Tools
+- Nodemon for server auto-reload
+- Uvicorn --reload for ML service auto-reload
+- Vite dev server for client HMR
+- Concurrent test running support
+
+---
+
+## 21. Seed Data
+
+### 21.1 Species Seed Script
+- `server/src/scripts/seedSpecies.js`
+- Seeds initial species catalog
+- Includes 20 Indian wildlife species with conservation statuses
+
+---
+
+## Summary Counts
+
+- **Backend Route Groups**: 16 (auth, users, species, sightings, tips, hwc, rescue, analytics, notifications, upload, missions, articles, role-requests, sessions, ml, trade-scan)
+- **Backend Endpoints**: ~60+
+- **Client Pages**: 30+
+- **ML Models**: 6 (species, camera-trap, bioacoustic, threat-audio, NDVI, hotspot, forecast, anomaly, movement, trade-scanner)
+- **Client Tests**: 40
+- **ML Service Tests**: 92
+- **Total Test Coverage**: 132 tests
+- **Six User Roles**: public, citizen, ranger, researcher, rescue, admin
+- **Documentation Files**: 5 (README, architecture, api-reference, Canopy_PRD, features)

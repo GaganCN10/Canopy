@@ -85,22 +85,78 @@ function App() {
               <Route path="forgot-password" element={<ForgotPassword />} />
               <Route path="reset-password" element={<ResetPassword />} />
               <Route path="unauthorized" element={<h1>Unauthorized</h1>} />
-              <Route path="species" element={<Species />} />
-              <Route path="species/predict" element={<SpeciesPredict />} />
-              <Route path="camera-trap" element={<CameraTrapTriage />} />
-              <Route path="bioacoustic" element={<BioacousticPredict />} />
-              <Route path="threat-audio" element={<ThreatAudioDetect />} />
-              <Route path="habitat" element={<HabitatMonitor />} />
-              <Route path="trade-scanner" element={<TradeScanner />} />
-              <Route path="sightings" element={<Sightings />} />
-              <Route path="sightings/report" element={<ReportSighting />} />
-              <Route path="map" element={<MapPage />} />
-              <Route path="tips/submit" element={<SubmitTip />} />
-              <Route path="hwc/report" element={<ReportHWC />} />
-              <Route path="rescue" element={<RescueCases />} />
-              <Route path="rescue/new" element={<CreateRescueCase />} />
-              <Route path="rescue/:id" element={<RescueCaseDetail />} />
-              <Route path="analytics" element={<AnalyticsDashboard />} />
+               <Route path="species" element={<Species />} />
+               <Route path="species/predict" element={
+                 <ProtectedRoute>
+                   <SpeciesPredict />
+                 </ProtectedRoute>
+               } />
+               <Route path="camera-trap" element={
+                 <ProtectedRoute>
+                   <CameraTrapTriage />
+                 </ProtectedRoute>
+               } />
+               <Route path="bioacoustic" element={
+                 <ProtectedRoute>
+                   <BioacousticPredict />
+                 </ProtectedRoute>
+               } />
+               <Route path="threat-audio" element={
+                 <ProtectedRoute>
+                   <ThreatAudioDetect />
+                 </ProtectedRoute>
+               } />
+               <Route path="habitat" element={
+                 <ProtectedRoute>
+                   <HabitatMonitor />
+                 </ProtectedRoute>
+               } />
+               <Route path="trade-scanner" element={
+                 <ProtectedRoute>
+                   <TradeScanner />
+                 </ProtectedRoute>
+               } />
+               <Route path="sightings" element={<Sightings />} />
+               <Route path="sightings/report" element={
+                 <ProtectedRoute>
+                   <ReportSighting />
+                 </ProtectedRoute>
+               } />
+               <Route path="map" element={
+                 <ProtectedRoute>
+                   <MapPage />
+                 </ProtectedRoute>
+               } />
+               <Route path="tips/submit" element={
+                 <ProtectedRoute>
+                   <SubmitTip />
+                 </ProtectedRoute>
+               } />
+               <Route path="hwc/report" element={
+                 <ProtectedRoute>
+                   <ReportHWC />
+                 </ProtectedRoute>
+               } />
+               <Route path="rescue" element={
+                 <ProtectedRoute>
+                   <RescueCases />
+                 </ProtectedRoute>
+               } />
+               <Route path="rescue/new" element={
+                 <ProtectedRoute>
+                   <CreateRescueCase />
+                 </ProtectedRoute>
+               } />
+               <Route path="rescue/:id" element={
+                 <ProtectedRoute>
+                   <RescueCaseDetail />
+                 </ProtectedRoute>
+               } />
+               <Route path="analytics" element={
+                 <ProtectedRoute>
+                   <AnalyticsDashboard />
+                 </ProtectedRoute>
+               } />
               <Route path="missions" element={<Missions />} />
               <Route path="missions/create" element={
                 <ProtectedRoute allowedRoles={['citizen', 'ranger', 'researcher', 'rescue', 'admin']}>

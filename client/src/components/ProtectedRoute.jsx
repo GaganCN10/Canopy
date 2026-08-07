@@ -14,7 +14,7 @@ function ProtectedRoute({ children, allowedRoles }) {
     return <Navigate to="/unauthorized" replace />;
   }
 
-  return children;
+  return <>{children}</>;
 }
 
 export default ProtectedRoute;
